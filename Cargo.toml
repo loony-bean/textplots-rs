@@ -1,0 +1,7 @@
+[package]
+name = "textplots"
+version = "0.1.0"
+authors = ["Alexey Suslov <alexey.suslov@gmail.com>"]
+
+[dependencies]
+drawille = "0.2.3"
