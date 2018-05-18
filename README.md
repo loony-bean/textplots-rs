@@ -1,3 +1,3 @@
 # textplots
 
-![alt demo](https://github.com/loony-bean/textplots-rs/blob/master/doc/demo.png "Plot!")
+<img src="https://github.com/loony-bean/textplots-rs/blob/master/doc/demo.png" width="500">
