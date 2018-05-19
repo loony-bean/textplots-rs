@@ -3,12 +3,15 @@ extern crate drawille;
 use drawille::{Canvas as BrailleCanvas};
 use std::collections::HashMap;
 use std::cmp;
+use std::default::Default;
 
 pub struct Chart {
     pub width: u32,
     pub height: u32,
     pub xmin: f32,
     pub xmax: f32,
+    pub ymin: f32,
+    pub ymax: f32,
     pub canvas: BrailleCanvas,
     pub data: HashMap<(u32, u32), u32>,
 }
@@ -22,18 +25,26 @@ pub struct Chart {
 // }
 
 pub trait Plot {
-    fn lineplot(&mut self, func: &Fn(f32) -> f32) -> ();
+    fn lineplot<'a>(&'a mut self, func: &Fn(f32) -> f32) -> &'a mut Chart;
     // fn scatterplot(&mut self, Vec<(f32, f32)>) -> ();
     // fn histogram(&self, values: Vec<f32>, bins: usize) -> ();
 }
 
+impl Default for Chart {
+    fn default() -> Self {
+        Self::new(120, 60, -10.0, 10.0)
+    }
+}
+
 impl Chart {
-    pub fn new(width: u32, height: u32) -> Self {
+    pub fn new(width: u32, height: u32, xmin: f32, xmax: f32) -> Self {
         Self {
-            xmin: -10.0,
-            xmax: 10.0,
-            width: width,
-            height: height,
+            xmin,
+            xmax,
+            ymin: 0.0,
+            ymax: 0.0,
+            width,
+            height,
             canvas: BrailleCanvas::new(width, height),
             data: HashMap::new(),
         }
@@ -69,25 +80,25 @@ impl Chart {
         }
     }
 
-    pub fn display(&self, xmin: f32, ymin: f32, xmax: f32, ymax: f32) {
+    pub fn display(&self) {
         let frame = self.canvas.frame();
         let rows = frame.split("\n").into_iter().count();
         for (i, row) in frame.split("\n").into_iter().enumerate() {
             if i == 0 {
-                println!("{0} {1:.1}", row, ymin);
+                println!("{0} {1:.1}", row, self.ymin);
             } else if i == (rows - 1) {
-                println!("{0} {1:.1}", row, ymax);
+                println!("{0} {1:.1}", row, self.ymax);
             } else {
                 println!("{}", row);
             }
         }
 
-        println!("{0: <width$.1}{1:.1}", xmin, xmax, width=(self.width as usize) / 2 - 3);
+        println!("{0: <width$.1}{1:.1}", self.xmin, self.xmax, width=(self.width as usize) / 2 - 3);
     }
 }
 
 impl Plot for Chart {
-    fn lineplot(&mut self, func: &Fn(f32) -> f32) {
+    fn lineplot<'a>(&'a mut self, func: &Fn(f32) -> f32) -> &'a mut Chart {
         self.borders();
 
         // calculation of x range
@@ -102,9 +113,13 @@ impl Plot for Chart {
 
         let mut ymax = *ys.iter().max_by( |x, y| x.partial_cmp(y).unwrap_or(cmp::Ordering::Equal) ).unwrap_or(&0.0);
         let mut ymin = *ys.iter().min_by( |x, y| x.partial_cmp(y).unwrap_or(cmp::Ordering::Equal) ).unwrap_or(&0.0);
-        let margin = (ymax - ymin) * 0.10;
-        ymin = ymin - margin;
-        ymax = ymax + margin;
+
+        self.ymin = f32::min(self.ymin, ymin);
+        self.ymax = f32::max(self.ymax, ymax);
+
+        let margin = (self.ymax - self.ymin) * 0.10;
+        ymin = self.ymin - margin;
+        ymax = self.ymax + margin;
         let yrange = ymax - ymin;
 
         // show axis
@@ -136,6 +151,6 @@ impl Plot for Chart {
             self.canvas.line(x1, y1, x2, y2);
         }
 
-        self.display(self.xmin, ymin, self.xmax, ymax);
+        self
     }
 }

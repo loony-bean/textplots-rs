@@ -4,13 +4,17 @@ use textplots::{Chart, Plot};
 
 fn main() {
     println!("y = atan(x)");
-    Chart::new(120, 60).lineplot(&(|x| x.atan() ));
+    Chart::default().lineplot(&(|x: f32| x.atan() )).display();
 
-    println!();
-    println!("y = sin(x) / x");
-    Chart::new(120, 60).lineplot(&(|x| x.sin() / x ));
+    println!("\ny = sin(x) / x");
+    Chart::default().lineplot(&(|x: f32| x.sin() / x )).display();
 
-    println!();
-    println!("y = cos(x)");
-    Chart::new(120, 60).lineplot(&(|x| x.cos()));
+    println!("\ny = ln(x)");
+    Chart::default().lineplot(&(|x: f32| x.ln() )).display();
+
+    println!("\ny = cos(x), y = sin(x)");
+    Chart::default()
+        .lineplot( &(|x| x.cos()) )
+        .lineplot( &(|x| x.sin() / 2.0) )
+        .display();
 }
