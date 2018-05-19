@@ -17,7 +17,7 @@ fn main() {
 
     // You can plot several functions on the same chart.
     // However the resolution of text displays is low, and the result might not be great.
-    // (note how you can use `new` to override some defaults)
+    // (note how you can use `new` to override the defaults)
     println!("\ny = cos(x), y = sin(x) / 2");
     Chart::new(180, 60, -5.0, 5.0)
         .lineplot( |x| x.cos() )
