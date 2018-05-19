@@ -12,7 +12,7 @@ fn main() {
     println!("\ny = ln(x)");
     Chart::default().lineplot(&(|x: f32| x.ln() )).display();
 
-    println!("\ny = cos(x), y = sin(x)");
+    println!("\ny = cos(x), y = sin(x) / 2");
     Chart::default()
         .lineplot( &(|x| x.cos()) )
         .lineplot( &(|x| x.sin() / 2.0) )
