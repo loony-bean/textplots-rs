@@ -126,7 +126,8 @@ impl Plot for Chart {
         let i_center = ((xrange - self.xmax) / xrange) * self.width as f32;
         self.i_reference(i_center as u32);
 
-        let j_center = ((yrange - ymax) / yrange) * self.height as f32;
+        let yrange_no_margin = self.ymax - self.ymin;
+        let j_center = ((yrange_no_margin - self.ymax) / yrange_no_margin) * self.height as f32;
         self.j_reference(j_center as u32);
 
         // calculate func and translate (x, y) points into screen coordinates
