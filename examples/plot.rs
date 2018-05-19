@@ -13,7 +13,7 @@ fn main() {
     Chart::default().lineplot(&(|x: f32| x.ln() )).display();
 
     println!("\ny = cos(x), y = sin(x) / 2");
-    Chart::default()
+    Chart::new(180, 60, -5.0, 5.0)
         .lineplot( &(|x| x.cos()) )
         .lineplot( &(|x| x.sin() / 2.0) )
         .display();
