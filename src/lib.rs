@@ -1,7 +1,6 @@
 extern crate drawille;
 
 use drawille::{Canvas as BrailleCanvas};
-use std::collections::HashMap;
 use std::cmp;
 use std::default::Default;
 
@@ -13,21 +12,10 @@ pub struct Chart {
     pub ymin: f32,
     pub ymax: f32,
     pub canvas: BrailleCanvas,
-    pub data: HashMap<(u32, u32), u32>,
 }
-
-// pub trait Canvas {
-//     fn clear() -> ();
-//     fn borders() -> ();
-//     fn axis() -> ();
-//     fn line(x1: u32, y1: u32, x2: u32, y2: u32) -> ();
-//     fn display() -> String;
-// }
 
 pub trait Plot {
     fn lineplot(&mut self, func: impl Fn(f32) -> f32) -> &mut Chart;
-    // fn scatterplot(&mut self, Vec<(f32, f32)>) -> ();
-    // fn histogram(&self, values: Vec<f32>, bins: usize) -> ();
 }
 
 impl Default for Chart {
@@ -46,11 +34,10 @@ impl Chart {
             width,
             height,
             canvas: BrailleCanvas::new(width, height),
-            data: HashMap::new(),
         }
     }
 
-    pub fn borders(&mut self) {
+    fn borders(&mut self) {
         let w = self.width;
         let h = self.height;
 
@@ -60,7 +47,7 @@ impl Chart {
         self.canvas.line(w, 0, w, h);
     }
 
-    pub fn i_reference(&mut self, i: u32) {
+    fn vline(&mut self, i: u32) {
         if i > 0 && i < self.width {
             for j in 0..self.height {
                 if j % 3 == 0 {
@@ -70,7 +57,7 @@ impl Chart {
         }
     }
 
-    pub fn j_reference(&mut self, j: u32) {
+    fn hline(&mut self, j: u32) {
         if j > 0 && j < self.height {
             for i in 0..self.width {
                 if i % 3 == 0 {
@@ -124,11 +111,11 @@ impl Plot for Chart {
 
         // show axis
         let i_center = ((xrange - self.xmax) / xrange) * self.width as f32;
-        self.i_reference(i_center as u32);
+        self.vline(i_center as u32);
 
         let yrange_no_margin = self.ymax - self.ymin;
         let j_center = ((yrange_no_margin - self.ymax) / yrange_no_margin) * self.height as f32;
-        self.j_reference(j_center as u32);
+        self.hline(j_center as u32);
 
         // calculate func and translate (x, y) points into screen coordinates
         let points: Vec<_> = (0..self.width)
