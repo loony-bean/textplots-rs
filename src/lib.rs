@@ -25,7 +25,7 @@ pub struct Chart {
 // }
 
 pub trait Plot {
-    fn lineplot<'a>(&'a mut self, func: &Fn(f32) -> f32) -> &'a mut Chart;
+    fn lineplot(&mut self, func: impl Fn(f32) -> f32) -> &mut Chart;
     // fn scatterplot(&mut self, Vec<(f32, f32)>) -> ();
     // fn histogram(&self, values: Vec<f32>, bins: usize) -> ();
 }
@@ -98,7 +98,7 @@ impl Chart {
 }
 
 impl Plot for Chart {
-    fn lineplot<'a>(&'a mut self, func: &Fn(f32) -> f32) -> &'a mut Chart {
+    fn lineplot(&mut self, func: impl Fn(f32) -> f32) -> &mut Chart {
         self.borders();
 
         // calculation of x range
