@@ -3,7 +3,7 @@
 Terminal plotting library for using in Rust CLI applications.
 Should work well in any unicode terminal with monospaced font.
 
-It is insired by [TextPlots.jl](https://github.com/sunetos/TextPlots.jl) which is inspired by [Drawille](https://github.com/asciimoo/drawille).
+It is inspired by [TextPlots.jl](https://github.com/sunetos/TextPlots.jl) which is inspired by [Drawille](https://github.com/asciimoo/drawille).
 
 Currently it features only drawing line charts on Braille canvas, but could be exterded
 to support other canvas and chart type just like [UnicodePlots.jl](https://github.com/Evizero/UnicodePlots.jl)
