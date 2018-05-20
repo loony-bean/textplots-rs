@@ -12,7 +12,7 @@
 //! # Usage
 //! ```toml
 //! [dependencies]
-//! textplots = "0.1"
+//! textplots = "0.2"
 //! ```
 //!
 //! ```rust
@@ -81,7 +81,19 @@ impl Default for Chart {
 
 impl Chart {
     /// Creates a new `Chart` object.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `width` or `height` is less than 32.
     pub fn new(width: u32, height: u32, xmin: f32, xmax: f32) -> Self {
+        if width < 32 {
+            panic!("width should be more then 32, {} is provided", width);
+        }
+
+        if height < 32 {
+            panic!("height should be more then 32, {} is provided", height);
+        }
+
         Self {
             xmin,
             xmax,
@@ -131,9 +143,9 @@ impl Chart {
         let frame = self.canvas.frame();
         let rows = frame.split('\n').into_iter().count();
         for (i, row) in frame.split('\n').into_iter().enumerate() {
-            if i == 0 {
+            if i == 1 {
                 println!("{0} {1:.1}", row, self.ymax);
-            } else if i == (rows - 1) {
+            } else if i == (rows - 2) {
                 println!("{0} {1:.1}", row, self.ymin);
             } else {
                 println!("{}", row);
@@ -164,7 +176,7 @@ impl Plot for Chart {
         self.ymin = f32::min(self.ymin, ymin);
         self.ymax = f32::max(self.ymax, ymax);
 
-        let margin = (self.ymax - self.ymin) * 0.10;
+        let margin = (self.ymax - self.ymin) * 0.05;
         ymin = self.ymin - margin;
         ymax = self.ymax + margin;
         let yrange = ymax - ymin;
@@ -173,8 +185,7 @@ impl Plot for Chart {
         let i_center = ((xrange - self.xmax) / xrange) * self.width as f32;
         self.vline(i_center as u32);
 
-        let yrange_no_margin = self.ymax - self.ymin;
-        let j_center = ((yrange_no_margin - self.ymax) / yrange_no_margin) * self.height as f32;
+        let j_center = ((yrange - ymax) / yrange) * self.height as f32;
         self.hline(j_center as u32);
 
         // calculate func and translate (x, y) points into screen coordinates
