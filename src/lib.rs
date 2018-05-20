@@ -1,20 +1,75 @@
+//! Terminal plotting library for using in CLI applications.
+//! Should work well in any unicode terminal with monospaced font.
+//!
+//! It is insired by [TextPlots.jl](https://github.com/sunetos/TextPlots.jl) which is inspired by [Drawille](https://github.com/asciimoo/drawille).
+//! 
+//! Currently it features only drawing line plots on Braille canvas, but could be exterded
+//! to support other canvas and chart type just like [UnicodePlots.jl](https://github.com/Evizero/UnicodePlots.jl)
+//! or any other cool terminal plotting library.
+//!
+//! Contributions are very much welcome!
+//!
+//! # Usage
+//! ```toml
+//! [dependencies]
+//! textplots = "0.1.0"
+//! ```
+//!
+//! ```rust
+//! extern crate textplots;
+//!
+//! use textplots::{Chart, Plot};
+//!
+//! fn main() {
+//!     println!("y = sin(x) / x");
+//!     Chart::default().lineplot(|x| x.sin() / x ).display();
+//! }
+//! ```
+//! It will display something like this:
+//!
+//! <img src="https://github.com/loony-bean/textplots-rs/blob/master/doc/demo.png?raw=true"/>
+//!
+//! Default viewport size is 120 x 60 points, with X values ranging from -10 to 10.
+//! You can override the defaults calling `new`.
+//!
+//! ```rust
+//! use textplots::{Chart, Plot};
+//!
+//! println!("y = cos(x), y = sin(x) / 2");
+//! Chart::new(180, 60, -5.0, 5.0)
+//!     .lineplot( |x| x.cos() )
+//!     .lineplot( |x| x.sin() / 2.0 )
+//!     .display();
+//! ```
+//! <img src="https://github.com/loony-bean/textplots-rs/blob/master/doc/demo2.png?raw=true"/>
+//!
 extern crate drawille;
 
 use drawille::{Canvas as BrailleCanvas};
 use std::cmp;
 use std::default::Default;
 
+/// Controls the drawing.
 pub struct Chart {
-    pub width: u32,
-    pub height: u32,
-    pub xmin: f32,
-    pub xmax: f32,
-    pub ymin: f32,
-    pub ymax: f32,
-    pub canvas: BrailleCanvas,
+    /// Canvas width in points
+    width: u32,
+    /// Canvas height in points
+    height: u32,
+    /// X-axis start value
+    xmin: f32,
+    /// X-axis end value
+    xmax: f32,
+    /// Y-axis start value (calculated automatically to display all the domain values)
+    ymin: f32,
+    /// Y-axis end value (calculated automatically to display all the domain values)
+    ymax: f32,
+    /// Underlying canvas object
+    canvas: BrailleCanvas,
 }
 
+/// Provides an interface for drawing plots.
 pub trait Plot {
+    /// Draws a [line chart](https://en.wikipedia.org/wiki/Line_chart) of points connected by straight line segments.
     fn lineplot(&mut self, func: impl Fn(f32) -> f32) -> &mut Chart;
 }
 
@@ -25,6 +80,7 @@ impl Default for Chart {
 }
 
 impl Chart {
+    /// Creates a new `Chart` object.
     pub fn new(width: u32, height: u32, xmin: f32, xmax: f32) -> Self {
         Self {
             xmin,
@@ -37,6 +93,7 @@ impl Chart {
         }
     }
 
+    /// Displays bounding rect,
     fn borders(&mut self) {
         let w = self.width;
         let h = self.height;
@@ -47,6 +104,7 @@ impl Chart {
         self.canvas.line(w, 0, w, h);
     }
 
+    /// Draws vertical line,
     fn vline(&mut self, i: u32) {
         if i > 0 && i < self.width {
             for j in 0..self.height {
@@ -57,6 +115,7 @@ impl Chart {
         }
     }
 
+    /// Draws horisontal line.
     fn hline(&mut self, j: u32) {
         if j > 0 && j < self.height {
             for i in 0..self.width {
@@ -67,10 +126,11 @@ impl Chart {
         }
     }
 
+    /// Prints canvas content.
     pub fn display(&self) {
         let frame = self.canvas.frame();
-        let rows = frame.split("\n").into_iter().count();
-        for (i, row) in frame.split("\n").into_iter().enumerate() {
+        let rows = frame.split('\n').into_iter().count();
+        for (i, row) in frame.split('\n').into_iter().enumerate() {
             if i == 0 {
                 println!("{0} {1:.1}", row, self.ymax);
             } else if i == (rows - 1) {
