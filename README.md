@@ -22,4 +22,4 @@ fn main() {
 }
 ```
 
-<img src="https://github.com/loony-bean/textplots-rs/blob/master/doc/demo.png">
+<img src="https://raw.githubusercontent.com/loony-bean/textplots-rs/master/doc/demo.png">
