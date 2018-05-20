@@ -12,7 +12,7 @@
 //! # Usage
 //! ```toml
 //! [dependencies]
-//! textplots = "0.1.0"
+//! textplots = "0.1"
 //! ```
 //!
 //! ```rust
