@@ -5,8 +5,9 @@ version = "0.1.0"
 authors = ["Alexey Suslov <alexey.suslov@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/loony-bean/textplots-rs"
-keywords = ["plotting", "ascii", "unicode", "charts"]
+keywords = ["plotting", "unicode", "charts"]
 categories = ["command-line-utilities", "visualization"]
+readme = "README.md"
 
 [badges]
 travis-ci = { repository = "loony-bean/textplots-rs", branch = "master" }
