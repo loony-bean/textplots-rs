@@ -1,10 +1,10 @@
 //! Terminal plotting library for using in CLI applications.
 //! Should work well in any unicode terminal with monospaced font.
 //!
-//! It is insired by [TextPlots.jl](https://github.com/sunetos/TextPlots.jl) which is inspired by [Drawille](https://github.com/asciimoo/drawille).
+//! It is inspired by [TextPlots.jl](https://github.com/sunetos/TextPlots.jl) which is inspired by [Drawille](https://github.com/asciimoo/drawille).
 //! 
-//! Currently it features only drawing line plots on Braille canvas, but could be exterded
-//! to support other canvas and chart type just like [UnicodePlots.jl](https://github.com/Evizero/UnicodePlots.jl)
+//! Currently it features only drawing line plots on Braille canvas, but could be extended
+//! to support other canvas and chart types just like [UnicodePlots.jl](https://github.com/Evizero/UnicodePlots.jl)
 //! or any other cool terminal plotting library.
 //!
 //! Contributions are very much welcome!
