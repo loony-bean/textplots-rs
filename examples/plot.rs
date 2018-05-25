@@ -1,6 +1,6 @@
 extern crate textplots;
 
-use textplots::{Chart, Plot};
+use textplots::{Chart, Plot, utils};
 
 fn main() {
     // You can pass any real value function
@@ -21,5 +21,27 @@ fn main() {
     Chart::new(180, 60, -5.0, 5.0)
         .lineplot( |x| x.cos() )
         .lineplot( |x| x.sin() / 2.0 )
+        .display();
+
+    let points = [
+        (-10.0, -1.0),
+        (0.0, 0.0),
+        (1.0, 1.0),
+        (2.0, 0.0),
+        (3.0, 3.0),
+        (4.0, 4.0),
+        (5.0, 3.0),
+        (9.0, 1.0),
+        (10.0, 0.0),
+    ];
+
+    println!("\ny = interpolated points");
+    Chart::default()
+        .lineplot(utils::interpolate(&points))
+        .display();
+
+    println!("\ny = staircase points");
+    Chart::default()
+        .lineplot(utils::staircase(&points))
         .display();
 }

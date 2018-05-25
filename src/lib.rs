@@ -45,6 +45,8 @@
 //!
 extern crate drawille;
 
+pub mod utils;
+
 use drawille::{Canvas as BrailleCanvas};
 use std::cmp;
 use std::default::Default;
