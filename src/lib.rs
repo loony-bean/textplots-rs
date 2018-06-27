@@ -18,11 +18,11 @@
 //! ```rust
 //! extern crate textplots;
 //!
-//! use textplots::{Chart, Plot};
+//! use textplots::{Chart, Plot, Shape};
 //!
 //! fn main() {
 //!     println!("y = sin(x) / x");
-//!     Chart::default().lineplot(|x| x.sin() / x ).display();
+//!     Chart::default().lineplot( Shape::Continuous( |x| x.sin() / x )).display();
 //! }
 //! ```
 //! It will display something like this:
@@ -33,12 +33,12 @@
 //! You can override the defaults calling `new`.
 //!
 //! ```rust
-//! use textplots::{Chart, Plot};
+//! use textplots::{Chart, Plot, Shape};
 //!
 //! println!("y = cos(x), y = sin(x) / 2");
 //! Chart::new(180, 60, -5.0, 5.0)
-//!     .lineplot( |x| x.cos() )
-//!     .lineplot( |x| x.sin() / 2.0 )
+//!     .lineplot( Shape::Continuous( |x| x.cos() ))
+//!     .lineplot( Shape::Continuous( |x| x.sin() / 2.0 ))
 //!     .display();
 //! ```
 //! <img src="https://github.com/loony-bean/textplots-rs/blob/master/doc/demo2.png?raw=true"/>
