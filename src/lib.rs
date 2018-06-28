@@ -258,7 +258,7 @@ impl Plot for Chart {
                     let x = x_scale.inv_linear(i as f32);
                     let y = f(x);
                     if y.is_normal() {
-                        let j = y_scale.linear(y);
+                        let j = y_scale.linear(y).round();
                         Some((i, self.height - j as u32))
                     } else {
                         None
@@ -272,8 +272,8 @@ impl Plot for Chart {
                 dt
                 .into_iter()
                 .filter_map(|(x, y)| {
-                    let i = x_scale.linear(*x) as u32;
-                    let j = y_scale.linear(*y) as u32;
+                    let i = x_scale.linear(*x).round() as u32;
+                    let j = y_scale.linear(*y).round() as u32;
                     if i <= self.width && j <= self.height {
                         Some( (i, self.height - j) )
                     } else {
