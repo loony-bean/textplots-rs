@@ -191,9 +191,9 @@ impl Chart {
         let frame = self.canvas.frame();
         let rows = frame.split('\n').into_iter().count();
         for (i, row) in frame.split('\n').into_iter().enumerate() {
-            if i == 1 {
+            if i == 0 {
                 println!("{0} {1:.1}", row, self.ymax);
-            } else if i == (rows - 2) {
+            } else if i == (rows - 1) {
                 println!("{0} {1:.1}", row, self.ymin);
             } else {
                 println!("{}", row);
