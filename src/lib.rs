@@ -49,6 +49,7 @@ pub mod utils;
 
 use drawille::{Canvas as BrailleCanvas};
 use std::cmp;
+use std::ops::Range;
 use std::default::Default;
 
 /// Controls the drawing.
@@ -71,38 +72,32 @@ pub struct Chart {
 
 #[derive(Debug)]
 pub struct Scale {
-    // domain
-    min_d: f32,
-    max_d: f32,
-    // range
-    min_r: f32,
-    max_r: f32,
+    domain: Range<f32>,
+    range: Range<f32>,
 }
 
 impl Scale {
     pub fn linear(&self, x: f32) -> f32 {
-        let p = (x - self.min_d) / (self.max_d - self.min_d);
-        let r = self.min_r + p * (self.max_r - self.min_r);
-        let r = r.max(self.min_r);
-        let r = r.min(self.max_r);
+        let p = (x - self.domain.start) / (self.domain.end - self.domain.start);
+        let r = self.range.start + p * (self.range.end - self.range.start);
+        let r = r.max(self.range.start);
+        let r = r.min(self.range.end);
         r
     }
 
     pub fn inv_linear(&self, i: f32) -> f32 {
-        let p = (i - self.min_r) / (self.max_r - self.min_r);
-        let d = self.min_d + p * (self.max_d - self.min_d);
+        let p = (i - self.range.start) / (self.range.end - self.range.start);
+        let d = self.domain.start + p * (self.domain.end - self.domain.start);
 
-        let d = d.max(self.min_d);
-        let d = d.min(self.max_d);
+        let d = d.max(self.domain.start);
+        let d = d.min(self.domain.end);
         d
     }
 
-    pub fn new(min_d: f32, max_d: f32, min_r: f32, max_r: f32) -> Self {
+    pub fn new(domain: Range<f32>, range: Range<f32>) -> Self {
         Scale {
-            min_d,
-            max_d,
-            min_r,
-            max_r,
+            domain,
+            range,
         }
     }
 }
@@ -211,7 +206,7 @@ impl Chart {
 
 impl Plot for Chart {
     fn lineplot(&mut self, shape: Shape) -> &mut Chart {
-        let x_scale = Scale::new(self.xmin, self.xmax, 0.0, self.width as f32);
+        let x_scale = Scale::new(self.xmin..self.xmax, 0.0..self.width as f32);
 
         let ys: Vec<_> = match shape {
             Shape::Continuous(f) => {
@@ -240,7 +235,7 @@ impl Plot for Chart {
         self.ymin = f32::min(self.ymin, ymin);
         self.ymax = f32::max(self.ymax, ymax);
 
-        let y_scale = Scale::new(self.ymin, self.ymax, 0.0, self.height as f32);
+        let y_scale = Scale::new(self.ymin..self.ymax, 0.0..self.height as f32);
 
         // show axis
         self.vline(x_scale.linear(0.0) as u32);
