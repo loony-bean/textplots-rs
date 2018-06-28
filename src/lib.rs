@@ -255,13 +255,14 @@ impl Plot for Chart {
                     } else {
                         None
                     }
-                }).collect()
+                })
+                .collect()
             },
             | Shape::Lines(dt)
             | Shape::Steps(dt)
             | Shape::Bars(dt) => {
                 dt
-                .iter()
+                .into_iter()
                 .filter_map(|(x, y)| {
                     let i = x_scale.linear(*x) as u32;
                     let j = y_scale.linear(*y) as u32;
@@ -275,6 +276,7 @@ impl Plot for Chart {
             },
         };
 
+        // display segments
         for pair in points.windows(2) {
             let (x1, y1) = pair[0];
             let (x2, y2) = pair[1];
