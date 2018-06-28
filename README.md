@@ -14,11 +14,11 @@ Contributions are very much welcome!
 ```rust
 extern crate textplots;
 
-use textplots::{Chart, Plot};
+use textplots::{Chart, Plot, Shape};
 
 fn main() {
     println!("y = sin(x) / x");
-    Chart::default().lineplot(|x| x.sin() / x ).display();
+    Chart::default().lineplot( Shape::Continuous( |x| x.sin() / x )).display();
 }
 ```
 

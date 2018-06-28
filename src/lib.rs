@@ -12,17 +12,17 @@
 //! # Usage
 //! ```toml
 //! [dependencies]
-//! textplots = "0.2"
+//! textplots = "0.3"
 //! ```
 //!
 //! ```rust
 //! extern crate textplots;
 //!
-//! use textplots::{Chart, Plot};
+//! use textplots::{Chart, Plot, Shape};
 //!
 //! fn main() {
 //!     println!("y = sin(x) / x");
-//!     Chart::default().lineplot(|x| x.sin() / x ).display();
+//!     Chart::default().lineplot( Shape::Continuous( |x| x.sin() / x )).display();
 //! }
 //! ```
 //! It will display something like this:
@@ -33,21 +33,28 @@
 //! You can override the defaults calling `new`.
 //!
 //! ```rust
-//! use textplots::{Chart, Plot};
+//! use textplots::{Chart, Plot, Shape};
 //!
 //! println!("y = cos(x), y = sin(x) / 2");
 //! Chart::new(180, 60, -5.0, 5.0)
-//!     .lineplot( |x| x.cos() )
-//!     .lineplot( |x| x.sin() / 2.0 )
+//!     .lineplot( Shape::Continuous( |x| x.cos() ))
+//!     .lineplot( Shape::Continuous( |x| x.sin() / 2.0 ))
 //!     .display();
 //! ```
 //! <img src="https://github.com/loony-bean/textplots-rs/blob/master/doc/demo2.png?raw=true"/>
 //!
+//! You could also plot series of points. See [Shape](enum.Shape.html) and [examples](https://github.com/loony-bean/textplots-rs/tree/master/examples) for more details.
+//!
+//! <img src="https://github.com/loony-bean/textplots-rs/blob/master/doc/demo3.png?raw=true"/>
+//!
+
 extern crate drawille;
 
 pub mod utils;
+pub mod scale;
 
 use drawille::{Canvas as BrailleCanvas};
+use scale::Scale;
 use std::cmp;
 use std::default::Default;
 
@@ -69,10 +76,22 @@ pub struct Chart {
     canvas: BrailleCanvas,
 }
 
+/// Specifies different kinds of plotted data.
+pub enum Shape<'a> {
+    /// Real value function
+    Continuous(fn(f32) -> f32),
+    /// Points connected with lines.
+    Lines(&'a [(f32, f32)]),
+    /// Points connected in step fashion.
+    Steps(&'a [(f32, f32)]),
+    /// Points represented with bars.
+    Bars(&'a [(f32, f32)]),
+}
+
 /// Provides an interface for drawing plots.
 pub trait Plot {
     /// Draws a [line chart](https://en.wikipedia.org/wiki/Line_chart) of points connected by straight line segments.
-    fn lineplot(&mut self, func: impl Fn(f32) -> f32) -> &mut Chart;
+    fn lineplot(&mut self, shape: Shape) -> &mut Chart;
 }
 
 impl Default for Chart {
@@ -99,29 +118,29 @@ impl Chart {
         Self {
             xmin,
             xmax,
-            ymin: 0.0,
-            ymax: 0.0,
+            ymin: 10.0,
+            ymax: -10.0,
             width,
             height,
             canvas: BrailleCanvas::new(width, height),
         }
     }
 
-    /// Displays bounding rect,
+    /// Displays bounding rect.
     fn borders(&mut self) {
         let w = self.width;
         let h = self.height;
 
-        self.canvas.line(0, 0, 0, h);
-        self.canvas.line(0, 0, w, 0);
-        self.canvas.line(0, h, w, h);
-        self.canvas.line(w, 0, w, h);
+        self.vline(0);
+        self.vline(w);
+        self.hline(0);
+        self.hline(h);
     }
 
-    /// Draws vertical line,
+    /// Draws vertical line.
     fn vline(&mut self, i: u32) {
-        if i > 0 && i < self.width {
-            for j in 0..self.height {
+        if i <= self.width {
+            for j in 0..=self.height {
                 if j % 3 == 0 {
                     self.canvas.set(i, j);
                 }
@@ -131,8 +150,8 @@ impl Chart {
 
     /// Draws horisontal line.
     fn hline(&mut self, j: u32) {
-        if j > 0 && j < self.height {
-            for i in 0..self.width {
+        if j <= self.height {
+            for i in 0..=self.width {
                 if i % 3 == 0 {
                     self.canvas.set(i, self.height - j);
                 }
@@ -145,9 +164,9 @@ impl Chart {
         let frame = self.canvas.frame();
         let rows = frame.split('\n').into_iter().count();
         for (i, row) in frame.split('\n').into_iter().enumerate() {
-            if i == 1 {
+            if i == 0 {
                 println!("{0} {1:.1}", row, self.ymax);
-            } else if i == (rows - 2) {
+            } else if i == (rows - 1) {
                 println!("{0} {1:.1}", row, self.ymin);
             } else {
                 println!("{}", row);
@@ -156,60 +175,119 @@ impl Chart {
 
         println!("{0: <width$.1}{1:.1}", self.xmin, self.xmax, width=(self.width as usize) / 2 - 3);
     }
+
+    /// Prints canvas content with some additional visual elements (like borders).
+    pub fn nice(&mut self) {
+        self.borders();
+        // self.axis();
+        self.display();
+    }
 }
 
 impl Plot for Chart {
-    fn lineplot(&mut self, func: impl Fn(f32) -> f32) -> &mut Chart {
-        self.borders();
+    fn lineplot(&mut self, shape: Shape) -> &mut Chart {
+        let x_scale = Scale::new(self.xmin..self.xmax, 0.0..self.width as f32);
 
-        // calculation of x range
-        let xrange = (self.xmax - self.xmin).abs();
-        let xstep = xrange / self.width as f32;
+        let ys: Vec<_> = match shape {
+            Shape::Continuous(f) => {
+                (0..self.width)
+                .into_iter()
+                .filter_map(|i| {
+                    let x = x_scale.inv_linear(i as f32);
+                    let y = f(x);
+                    if y.is_normal() {
+                        Some(y)
+                    } else {
+                        None
+                    }
+                })
+                .collect()
+            },
+            | Shape::Lines(dt)
+            | Shape::Steps(dt)
+            | Shape::Bars(dt) => {
+                dt.iter()
+                .filter_map(|(x, y)| {
+                    if *x >= self.xmin && *x <= self.xmax {
+                        Some(*y)
+                    } else {
+                        None
+                    }
+                }).collect()
+            },
+        };
 
-        // auto calculation of y range
-        let ys: Vec<_> = (0..self.width)
-            .into_iter()
-            .map(|i| func(self.xmin + (i as f32) * xstep) )
-            .collect();
-
-        let mut ymax = *ys.iter().max_by( |x, y| x.partial_cmp(y).unwrap_or(cmp::Ordering::Equal) ).unwrap_or(&0.0);
-        let mut ymin = *ys.iter().min_by( |x, y| x.partial_cmp(y).unwrap_or(cmp::Ordering::Equal) ).unwrap_or(&0.0);
+        let ymax = *ys.iter().max_by( |x, y| x.partial_cmp(y).unwrap_or(cmp::Ordering::Equal) ).unwrap_or(&0.0);
+        let ymin = *ys.iter().min_by( |x, y| x.partial_cmp(y).unwrap_or(cmp::Ordering::Equal) ).unwrap_or(&0.0);
 
         self.ymin = f32::min(self.ymin, ymin);
         self.ymax = f32::max(self.ymax, ymax);
 
-        let margin = (self.ymax - self.ymin) * 0.05;
-        ymin = self.ymin - margin;
-        ymax = self.ymax + margin;
-        let yrange = ymax - ymin;
+        let y_scale = Scale::new(self.ymin..self.ymax, 0.0..self.height as f32);
 
         // show axis
-        let i_center = ((xrange - self.xmax) / xrange) * self.width as f32;
-        self.vline(i_center as u32);
+        self.vline(x_scale.linear(0.0) as u32);
+        self.hline(y_scale.linear(0.0) as u32);
 
-        let j_center = ((yrange - ymax) / yrange) * self.height as f32;
-        self.hline(j_center as u32);
+        // translate (x, y) points into screen coordinates
+        let points: Vec<_> = match shape {
+            Shape::Continuous(f) => {
+                (0..self.width)
+                .into_iter()
+                .filter_map(|i| {
+                    let x = x_scale.inv_linear(i as f32);
+                    let y = f(x);
+                    if y.is_normal() {
+                        let j = y_scale.linear(y).round();
+                        Some((i, self.height - j as u32))
+                    } else {
+                        None
+                    }
+                })
+                .collect()
+            },
+            | Shape::Lines(dt)
+            | Shape::Steps(dt)
+            | Shape::Bars(dt) => {
+                dt
+                .into_iter()
+                .filter_map(|(x, y)| {
+                    let i = x_scale.linear(*x).round() as u32;
+                    let j = y_scale.linear(*y).round() as u32;
+                    if i <= self.width && j <= self.height {
+                        Some( (i, self.height - j) )
+                    } else {
+                        None
+                    }
+                })
+                .collect()
+            },
+        };
 
-        // calculate func and translate (x, y) points into screen coordinates
-        let points: Vec<_> = (0..self.width)
-            .into_iter()
-            .filter_map(|i| {
-                let x = self.xmin + (i as f32) * xstep;
-                let y = func(x);
-                if y.is_normal() {
-                    let j = (((y - ymin) / yrange) * self.height as f32) as i32;
-                    let j = j.max(0) as u32;
-                    let j = j.min(self.width);
-                    Some((i, self.height - j))
-                } else {
-                    None
-                }
-            }).collect();
-
+        // display segments
         for pair in points.windows(2) {
             let (x1, y1) = pair[0];
             let (x2, y2) = pair[1];
-            self.canvas.line(x1, y1, x2, y2);
+
+            match shape {
+                Shape::Continuous(_) => {
+                    self.canvas.line(x1, y1, x2, y2);
+                },
+                Shape::Lines(_) => {
+                    self.canvas.line(x1, y1, x2, y2);
+                },
+                Shape::Steps(_) => {
+                    self.canvas.line(x1, y2, x2, y2);
+                    self.canvas.line(x1, y1, x1, y2);
+                },
+                Shape::Bars(_) => {
+                    self.canvas.line(x1, y2, x2, y2);
+                    self.canvas.line(x1, y1, x1, y2);
+
+                    self.canvas.line(x1, self.height, x1, y1);
+                    self.canvas.line(x2, self.height, x2, y2);
+                },
+            }
         }
 
         self
