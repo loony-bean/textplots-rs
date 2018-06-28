@@ -185,6 +185,12 @@ impl Chart {
         }
     }
 
+    pub fn nice(&mut self) {
+        self.borders();
+        // self.axis();
+        self.display();
+    }
+
     /// Prints canvas content.
     pub fn display(&self) {
         let frame = self.canvas.frame();
@@ -205,8 +211,6 @@ impl Chart {
 
 impl Plot for Chart {
     fn lineplot(&mut self, shape: Shape) -> &mut Chart {
-        self.borders();
-
         let x_scale = Scale::new(self.xmin, self.xmax, 0.0, self.width as f32);
 
         let ys: Vec<_> = match shape {
@@ -219,7 +223,14 @@ impl Plot for Chart {
             | Shape::Lines(dt)
             | Shape::Steps(dt)
             | Shape::Bars(dt) => {
-                dt.iter().map(|(_x, y)| *y).collect()
+                dt.iter()
+                .filter_map(|(x, y)| {
+                    if *x >= self.xmin && *x <= self.xmax {
+                        Some(*y)
+                    } else {
+                        None
+                    }
+                }).collect()
             },
         };
 
@@ -242,12 +253,9 @@ impl Plot for Chart {
                 .into_iter()
                 .filter_map(|i| {
                     let x = x_scale.inv_linear(i as f32);
-                    // println!("x = {}", x);
                     let y = f(x);
-                    // println!("y = {}", y);
                     if y.is_normal() {
                         let j = y_scale.linear(y);
-                        // println!("j = {}", j);
                         Some((i, self.height - j as u32))
                     } else {
                         None

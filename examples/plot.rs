@@ -50,9 +50,4 @@ fn main() {
     Chart::default()
         .lineplot( Shape::Steps(&points) )
         .display();
-
-    println!("\ny = points as bars");
-    Chart::default()
-        .lineplot( Shape::Bars(&points) )
-        .display();
 }

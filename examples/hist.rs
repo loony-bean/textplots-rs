@@ -52,5 +52,10 @@ fn main() {
     println!("\ny = continuous atan");
     Chart::new(180, 60, -30.0, 6.0)
         .lineplot( Shape::Continuous( |x| x.atan() ) )
+        .nice();
+
+    println!("\ny = ln(x)");
+    Chart::default()
+        .lineplot( Shape::Continuous( f32::ln ))
         .display();
 }
