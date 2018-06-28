@@ -212,7 +212,15 @@ impl Plot for Chart {
             Shape::Continuous(f) => {
                 (0..self.width)
                 .into_iter()
-                .map(|i| f(x_scale.inv_linear(i as f32)) )
+                .filter_map(|i| {
+                    let x = x_scale.inv_linear(i as f32);
+                    let y = f(x);
+                    if y.is_normal() {
+                        Some(y)
+                    } else {
+                        None
+                    }
+                })
                 .collect()
             },
             | Shape::Lines(dt)
