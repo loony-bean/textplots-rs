@@ -40,3 +40,26 @@ pub fn staircase<'a>(data: &'a [(f32, f32)]) -> impl Fn(f32) -> f32 + 'a {
         0.0
     }
 }
+
+pub fn histogram(data: &[(f32, f32)], min: f32, max: f32, bins: usize) -> Vec<(f32, f32)> {
+    let mut output = vec!(0; bins + 1);
+
+    let step = (max - min) / (bins + 1) as f32;
+
+    for &(_x, y) in data.iter() {
+        if y < min || y > max {
+            continue;
+        }
+
+        let bucket_id = ((y - min) / step) as usize;
+        if bucket_id < output.len() {
+            output[bucket_id as usize] += 1;
+        }
+    }
+
+    output
+        .into_iter()
+        .enumerate()
+        .map(|(x, y)| ((min + (x as f32) * step), y as f32) )
+        .collect()
+}
