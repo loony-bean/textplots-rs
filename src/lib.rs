@@ -147,7 +147,7 @@ impl Chart {
         }
     }
 
-    /// Displays bounding rect,
+    /// Displays bounding rect.
     fn borders(&mut self) {
         let w = self.width;
         let h = self.height;
@@ -158,7 +158,7 @@ impl Chart {
         self.hline(h);
     }
 
-    /// Draws vertical line,
+    /// Draws vertical line.
     fn vline(&mut self, i: u32) {
         if i <= self.width {
             for j in 0..=self.height {
@@ -249,7 +249,7 @@ impl Plot for Chart {
         self.vline(x_scale.linear(0.0) as u32);
         self.hline(y_scale.linear(0.0) as u32);
 
-        // calculate func and translate (x, y) points into screen coordinates
+        // translate (x, y) points into screen coordinates
         let points: Vec<_> = match shape {
             Shape::Continuous(f) => {
                 (0..self.width)
