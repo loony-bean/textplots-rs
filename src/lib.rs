@@ -12,7 +12,7 @@
 //! # Usage
 //! ```toml
 //! [dependencies]
-//! textplots = "0.2"
+//! textplots = "0.3"
 //! ```
 //!
 //! ```rust
@@ -46,10 +46,11 @@
 extern crate drawille;
 
 pub mod utils;
+pub mod scale;
 
 use drawille::{Canvas as BrailleCanvas};
+use scale::Scale;
 use std::cmp;
-use std::ops::Range;
 use std::default::Default;
 
 /// Controls the drawing.
@@ -70,42 +71,15 @@ pub struct Chart {
     canvas: BrailleCanvas,
 }
 
-#[derive(Debug)]
-pub struct Scale {
-    domain: Range<f32>,
-    range: Range<f32>,
-}
-
-impl Scale {
-    pub fn linear(&self, x: f32) -> f32 {
-        let p = (x - self.domain.start) / (self.domain.end - self.domain.start);
-        let r = self.range.start + p * (self.range.end - self.range.start);
-        let r = r.max(self.range.start);
-        let r = r.min(self.range.end);
-        r
-    }
-
-    pub fn inv_linear(&self, i: f32) -> f32 {
-        let p = (i - self.range.start) / (self.range.end - self.range.start);
-        let d = self.domain.start + p * (self.domain.end - self.domain.start);
-
-        let d = d.max(self.domain.start);
-        let d = d.min(self.domain.end);
-        d
-    }
-
-    pub fn new(domain: Range<f32>, range: Range<f32>) -> Self {
-        Scale {
-            domain,
-            range,
-        }
-    }
-}
-
+/// Specifies different kinds of plotted data.
 pub enum Shape<'a> {
+    /// Real value function
     Continuous(fn(f32) -> f32),
+    /// Points connected with lines.
     Lines(&'a [(f32, f32)]),
+    /// Points connected in step fashion.
     Steps(&'a [(f32, f32)]),
+    /// Points represented with bars.
     Bars(&'a [(f32, f32)]),
 }
 
@@ -180,12 +154,6 @@ impl Chart {
         }
     }
 
-    pub fn nice(&mut self) {
-        self.borders();
-        // self.axis();
-        self.display();
-    }
-
     /// Prints canvas content.
     pub fn display(&self) {
         let frame = self.canvas.frame();
@@ -201,6 +169,13 @@ impl Chart {
         }
 
         println!("{0: <width$.1}{1:.1}", self.xmin, self.xmax, width=(self.width as usize) / 2 - 3);
+    }
+
+    /// Prints canvas content with some additional visual elements (like borders).
+    pub fn nice(&mut self) {
+        self.borders();
+        // self.axis();
+        self.display();
     }
 }
 
