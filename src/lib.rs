@@ -37,7 +37,6 @@
 //!
 //! println!("y = cos(x), y = sin(x) / 2");
 //! Chart::new(180, 60, -5.0, 5.0)
-//!     .y_label("λ")
 //!     .lineplot( Shape::Continuous( |x| x.cos() ))
 //!     .lineplot( Shape::Continuous( |x| x.sin() / 2.0 ))
 //!     .display();
@@ -73,8 +72,6 @@ pub struct Chart {
     ymin: f32,
     /// Y-axis end value (calculated automatically to display all the domain values)
     ymax: f32,
-    /// Y-axis label
-    ylabel: Option<String>,
     /// Underlying canvas object
     canvas: BrailleCanvas,
 }
@@ -95,8 +92,6 @@ pub enum Shape<'a> {
 pub trait Plot {
     /// Draws a [line chart](https://en.wikipedia.org/wiki/Line_chart) of points connected by straight line segments.
     fn lineplot(&mut self, shape: Shape) -> &mut Chart;
-    /// Add a Y-axis label
-    fn y_label(&mut self, label: &str) -> &mut Chart;
 }
 
 impl Default for Chart {
@@ -127,8 +122,7 @@ impl Chart {
             ymax: -10.0,
             width,
             height,
-            canvas: BrailleCanvas::new(width, height),
-            ylabel: None
+            canvas: BrailleCanvas::new(width, height)
         }
     }
 
@@ -169,17 +163,11 @@ impl Chart {
     pub fn display(&self) {
         let frame = self.canvas.frame();
         let rows = frame.split('\n').into_iter().count();
-        let mid = rows / 2;
         for (i, row) in frame.split('\n').into_iter().enumerate() {
             if i == 0 {
                 println!("{0} {1:.1}", row, self.ymax);
             } else if i == (rows - 1) {
                 println!("{0} {1:.1}", row, self.ymin);
-            } else if i == mid {
-                match self.ylabel {
-                    Some(ref label) => println!("{0} {1:}", row, label),
-                    None => println!("{}", row)
-                };
             } else {
                 println!("{}", row);
             }
@@ -194,14 +182,14 @@ impl Chart {
         // self.axis();
         self.display();
     }
+
+    /// Return the frame
+    pub fn frame(&self) -> String {
+        self.canvas.frame()
+    }
 }
 
 impl Plot for Chart {
-    fn y_label(&mut self, label: &str) -> &mut Chart {
-        self.ylabel = Some(label.into());
-        self
-    }
-
     fn lineplot(&mut self, shape: Shape) -> &mut Chart {
         let x_scale = Scale::new(self.xmin..self.xmax, 0.0..self.width as f32);
 
