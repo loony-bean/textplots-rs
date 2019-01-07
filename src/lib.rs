@@ -122,7 +122,7 @@ impl Chart {
             ymax: -10.0,
             width,
             height,
-            canvas: BrailleCanvas::new(width, height),
+            canvas: BrailleCanvas::new(width, height)
         }
     }
 
@@ -181,6 +181,11 @@ impl Chart {
         self.borders();
         // self.axis();
         self.display();
+    }
+
+    /// Return the frame
+    pub fn frame(&self) -> String {
+        self.canvas.frame()
     }
 }
 
