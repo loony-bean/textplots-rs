@@ -56,6 +56,7 @@ pub mod scale;
 use drawille::{Canvas as BrailleCanvas};
 use scale::Scale;
 use std::cmp;
+use std::f32;
 use std::default::Default;
 
 /// Controls the drawing.
@@ -118,8 +119,8 @@ impl Chart {
         Self {
             xmin,
             xmax,
-            ymin: 10.0,
-            ymax: -10.0,
+            ymin: f32::INFINITY,
+            ymax: f32::NEG_INFINITY,
             width,
             height,
             canvas: BrailleCanvas::new(width, height)
@@ -231,8 +232,12 @@ impl Plot for Chart {
         let y_scale = Scale::new(self.ymin..self.ymax, 0.0..self.height as f32);
 
         // show axis
-        self.vline(x_scale.linear(0.0) as u32);
-        self.hline(y_scale.linear(0.0) as u32);
+        if self.xmin <= 0.0 && self.xmax >= 0.0 {
+            self.vline(x_scale.linear(0.0) as u32);
+        }
+        if self.ymin <= 0.0 && self.ymax >= 0.0 {
+            self.hline(y_scale.linear(0.0) as u32);
+        }
 
         // translate (x, y) points into screen coordinates
         let points: Vec<_> = match shape {
