@@ -81,6 +81,8 @@ pub struct Chart {
 pub enum Shape<'a> {
     /// Real value function
     Continuous(fn(f32) -> f32),
+    /// Points of a scatter plot.
+    Points(&'a [(f32, f32)]),
     /// Points connected with lines.
     Lines(&'a [(f32, f32)]),
     /// Points connected in step fashion.
@@ -209,6 +211,7 @@ impl Plot for Chart {
                 })
                 .collect()
             },
+            | Shape::Points(dt)
             | Shape::Lines(dt)
             | Shape::Steps(dt)
             | Shape::Bars(dt) => {
@@ -256,6 +259,7 @@ impl Plot for Chart {
                 })
                 .collect()
             },
+            | Shape::Points(dt)
             | Shape::Lines(dt)
             | Shape::Steps(dt)
             | Shape::Bars(dt) => {
@@ -282,6 +286,10 @@ impl Plot for Chart {
             match shape {
                 Shape::Continuous(_) => {
                     self.canvas.line(x1, y1, x2, y2);
+                },
+                Shape::Points(_) => {
+                    self.canvas.set(x1, y1);
+                    self.canvas.set(x2, y2);
                 },
                 Shape::Lines(_) => {
                     self.canvas.line(x1, y1, x2, y2);
