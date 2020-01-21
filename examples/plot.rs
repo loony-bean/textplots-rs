@@ -38,7 +38,7 @@ fn main() {
         (4.0, 4.0),
         (5.0, 3.0),
         (9.0, 1.0),
-        (10.0, 0.0),
+        (10.0, -1.0),
     ];
 
     println!("\ny = interpolated points");
@@ -50,4 +50,9 @@ fn main() {
     Chart::default()
         .lineplot( Shape::Steps(&points) )
         .display();
-}
+
+    println!("\ny = scatter plot");
+    Chart::default()
+        .lineplot( Shape::Points(&points) )
+        .display();
+    }
