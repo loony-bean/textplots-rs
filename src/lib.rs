@@ -279,32 +279,39 @@ impl Plot for Chart {
         };
 
         // display segments
-        for pair in points.windows(2) {
-            let (x1, y1) = pair[0];
-            let (x2, y2) = pair[1];
+        match shape {
+            Shape::Continuous(_) | Shape::Lines(_) => {
+                for pair in points.windows(2) {
+                    let (x1, y1) = pair[0];
+                    let (x2, y2) = pair[1];
 
-            match shape {
-                Shape::Continuous(_) => {
                     self.canvas.line(x1, y1, x2, y2);
-                },
-                Shape::Points(_) => {
-                    self.canvas.set(x1, y1);
-                    self.canvas.set(x2, y2);
-                },
-                Shape::Lines(_) => {
-                    self.canvas.line(x1, y1, x2, y2);
-                },
-                Shape::Steps(_) => {
+                }
+            },
+            Shape::Points(_) => {
+                for (x, y) in points {
+                    self.canvas.set(x, y);
+                }
+            },
+            Shape::Steps(_) => {
+                for pair in points.windows(2) {
+                    let (x1, y1) = pair[0];
+                    let (x2, y2) = pair[1];
+
                     self.canvas.line(x1, y2, x2, y2);
                     self.canvas.line(x1, y1, x1, y2);
-                },
-                Shape::Bars(_) => {
+                }
+            }
+            Shape::Bars(_) => {
+                for pair in points.windows(2) {
+                    let (x1, y1) = pair[0];
+                    let (x2, y2) = pair[1];
+
                     self.canvas.line(x1, y2, x2, y2);
                     self.canvas.line(x1, y1, x1, y2);
-
                     self.canvas.line(x1, self.height, x1, y1);
                     self.canvas.line(x2, self.height, x2, y2);
-                },
+                }
             }
         }
 
