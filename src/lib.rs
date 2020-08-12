@@ -151,7 +151,7 @@ impl Chart {
         }
     }
 
-    /// Draws horisontal line.
+    /// Draws horizontal line.
     fn hline(&mut self, j: u32) {
         if j <= self.height {
             for i in 0..=self.width {
