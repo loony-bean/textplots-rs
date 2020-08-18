@@ -2,7 +2,7 @@
 //! Should work well in any unicode terminal with monospaced font.
 //!
 //! It is inspired by [TextPlots.jl](https://github.com/sunetos/TextPlots.jl) which is inspired by [Drawille](https://github.com/asciimoo/drawille).
-//! 
+//!
 //! Currently it features only drawing line plots on Braille canvas, but could be extended
 //! to support other canvas and chart types just like [UnicodePlots.jl](https://github.com/Evizero/UnicodePlots.jl)
 //! or any other cool terminal plotting library.
@@ -50,14 +50,14 @@
 
 extern crate drawille;
 
-pub mod utils;
 pub mod scale;
+pub mod utils;
 
-use drawille::{Canvas as BrailleCanvas};
+use drawille::Canvas as BrailleCanvas;
 use scale::Scale;
 use std::cmp;
-use std::f32;
 use std::default::Default;
+use std::f32;
 
 /// Controls the drawing.
 pub struct Chart {
@@ -125,7 +125,7 @@ impl Chart {
             ymax: f32::NEG_INFINITY,
             width,
             height,
-            canvas: BrailleCanvas::new(width, height)
+            canvas: BrailleCanvas::new(width, height),
         }
     }
 
@@ -176,7 +176,12 @@ impl Chart {
             }
         }
 
-        println!("{0: <width$.1}{1:.1}", self.xmin, self.xmax, width=(self.width as usize) / 2 - 3);
+        println!(
+            "{0: <width$.1}{1:.1}",
+            self.xmin,
+            self.xmax,
+            width = (self.width as usize) / 2 - 3
+        );
     }
 
     /// Prints canvas content with some additional visual elements (like borders).
@@ -197,8 +202,7 @@ impl Plot for Chart {
         let x_scale = Scale::new(self.xmin..self.xmax, 0.0..self.width as f32);
 
         let ys: Vec<_> = match shape {
-            Shape::Continuous(f) => {
-                (0..self.width)
+            Shape::Continuous(f) => (0..self.width)
                 .into_iter()
                 .filter_map(|i| {
                     let x = x_scale.inv_linear(i as f32);
@@ -209,25 +213,27 @@ impl Plot for Chart {
                         None
                     }
                 })
-                .collect()
-            },
-            | Shape::Points(dt)
-            | Shape::Lines(dt)
-            | Shape::Steps(dt)
-            | Shape::Bars(dt) => {
-                dt.iter()
+                .collect(),
+            Shape::Points(dt) | Shape::Lines(dt) | Shape::Steps(dt) | Shape::Bars(dt) => dt
+                .iter()
                 .filter_map(|(x, y)| {
                     if *x >= self.xmin && *x <= self.xmax {
                         Some(*y)
                     } else {
                         None
                     }
-                }).collect()
-            },
+                })
+                .collect(),
         };
 
-        let ymax = *ys.iter().max_by( |x, y| x.partial_cmp(y).unwrap_or(cmp::Ordering::Equal) ).unwrap_or(&0.0);
-        let ymin = *ys.iter().min_by( |x, y| x.partial_cmp(y).unwrap_or(cmp::Ordering::Equal) ).unwrap_or(&0.0);
+        let ymax = *ys
+            .iter()
+            .max_by(|x, y| x.partial_cmp(y).unwrap_or(cmp::Ordering::Equal))
+            .unwrap_or(&0.0);
+        let ymin = *ys
+            .iter()
+            .min_by(|x, y| x.partial_cmp(y).unwrap_or(cmp::Ordering::Equal))
+            .unwrap_or(&0.0);
 
         self.ymin = f32::min(self.ymin, ymin);
         self.ymax = f32::max(self.ymax, ymax);
@@ -244,8 +250,7 @@ impl Plot for Chart {
 
         // translate (x, y) points into screen coordinates
         let points: Vec<_> = match shape {
-            Shape::Continuous(f) => {
-                (0..self.width)
+            Shape::Continuous(f) => (0..self.width)
                 .into_iter()
                 .filter_map(|i| {
                     let x = x_scale.inv_linear(i as f32);
@@ -257,25 +262,19 @@ impl Plot for Chart {
                         None
                     }
                 })
-                .collect()
-            },
-            | Shape::Points(dt)
-            | Shape::Lines(dt)
-            | Shape::Steps(dt)
-            | Shape::Bars(dt) => {
-                dt
+                .collect(),
+            Shape::Points(dt) | Shape::Lines(dt) | Shape::Steps(dt) | Shape::Bars(dt) => dt
                 .into_iter()
                 .filter_map(|(x, y)| {
                     let i = x_scale.linear(*x).round() as u32;
                     let j = y_scale.linear(*y).round() as u32;
                     if i <= self.width && j <= self.height {
-                        Some( (i, self.height - j) )
+                        Some((i, self.height - j))
                     } else {
                         None
                     }
                 })
-                .collect()
-            },
+                .collect(),
         };
 
         // display segments
@@ -287,12 +286,12 @@ impl Plot for Chart {
 
                     self.canvas.line(x1, y1, x2, y2);
                 }
-            },
+            }
             Shape::Points(_) => {
                 for (x, y) in points {
                     self.canvas.set(x, y);
                 }
-            },
+            }
             Shape::Steps(_) => {
                 for pair in points.windows(2) {
                     let (x1, y1) = pair[0];

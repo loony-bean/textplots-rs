@@ -39,9 +39,6 @@ impl Scale {
     }
 
     pub fn new(domain: Range<f32>, range: Range<f32>) -> Self {
-        Scale {
-            domain,
-            range,
-        }
+        Scale { domain, range }
     }
 }
