@@ -108,22 +108,22 @@ fn main() {
 
     println!("\ny = line plot");
     Chart::new(180, 60, 0.0, 100.0)
-        .lineplot(Shape::Lines(&points))
+        .lineplot(&Shape::Lines(&points))
         .display();
 
     println!("\ny = steps");
     Chart::new(180, 60, 0.0, 100.0)
-        .lineplot(Shape::Steps(&points))
+        .lineplot(&Shape::Steps(&points))
         .display();
 
     println!("\ny = bars");
     Chart::new(180, 60, 0.0, 100.0)
-        .lineplot(Shape::Bars(&points))
+        .lineplot(&Shape::Bars(&points))
         .display();
 
     let hist = utils::histogram(&points, 6.0, 15.0, 16);
     println!("\ny = histogram bars");
     Chart::new(180, 60, 6.0, 14.0)
-        .lineplot(Shape::Bars(&hist))
+        .lineplot(&Shape::Bars(&hist))
         .nice();
 }

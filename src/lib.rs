@@ -22,7 +22,7 @@
 //!
 //! fn main() {
 //!     println!("y = sin(x) / x");
-//!     Chart::default().lineplot( Shape::Continuous( |x| x.sin() / x )).display();
+//!     Chart::default().lineplot(&Shape::Continuous(|x| x.sin() / x)).display();
 //! }
 //! ```
 //! It will display something like this:
@@ -37,8 +37,8 @@
 //!
 //! println!("y = cos(x), y = sin(x) / 2");
 //! Chart::new(180, 60, -5.0, 5.0)
-//!     .lineplot( Shape::Continuous( |x| x.cos() ))
-//!     .lineplot( Shape::Continuous( |x| x.sin() / 2.0 ))
+//!     .lineplot(&Shape::Continuous(|x| x.cos()))
+//!     .lineplot(&Shape::Continuous(|x| x.sin() / 2.0))
 //!     .display();
 //! ```
 //! <img src="https://github.com/loony-bean/textplots-rs/blob/master/doc/demo2.png?raw=true"/>
@@ -60,7 +60,7 @@ use std::default::Default;
 use std::f32;
 
 /// Controls the drawing.
-pub struct Chart {
+pub struct Chart<'a> {
     /// Canvas width in points
     width: u32,
     /// Canvas height in points
@@ -73,6 +73,8 @@ pub struct Chart {
     ymin: f32,
     /// Y-axis end value (calculated automatically to display all the domain values)
     ymax: f32,
+    /// Collection of shapes to be presented on the canvas
+    shapes: Vec<&'a Shape<'a>>,
     /// Underlying canvas object
     canvas: BrailleCanvas,
 }
@@ -92,18 +94,18 @@ pub enum Shape<'a> {
 }
 
 /// Provides an interface for drawing plots.
-pub trait Plot {
+pub trait Plot<'a> {
     /// Draws a [line chart](https://en.wikipedia.org/wiki/Line_chart) of points connected by straight line segments.
-    fn lineplot(&mut self, shape: Shape) -> &mut Chart;
+    fn lineplot(&'a mut self, shape: &'a Shape) -> &'a mut Chart;
 }
 
-impl Default for Chart {
+impl<'a> Default for Chart<'a> {
     fn default() -> Self {
         Self::new(120, 60, -10.0, 10.0)
     }
 }
 
-impl Chart {
+impl<'a> Chart<'a> {
     /// Creates a new `Chart` object.
     ///
     /// # Panics
@@ -125,6 +127,7 @@ impl Chart {
             ymax: f32::NEG_INFINITY,
             width,
             height,
+            shapes: Vec::new(),
             canvas: BrailleCanvas::new(width, height),
         }
     }
@@ -163,7 +166,10 @@ impl Chart {
     }
 
     /// Prints canvas content.
-    pub fn display(&self) {
+    pub fn display(&mut self) {
+        self.figures();
+        self.axis();
+
         let frame = self.canvas.frame();
         let rows = frame.split('\n').into_iter().count();
         for (i, row) in frame.split('\n').into_iter().enumerate() {
@@ -187,8 +193,94 @@ impl Chart {
     /// Prints canvas content with some additional visual elements (like borders).
     pub fn nice(&mut self) {
         self.borders();
-        // self.axis();
         self.display();
+    }
+
+    /// Show axis
+    pub fn axis(&mut self) {
+        let x_scale = Scale::new(self.xmin..self.xmax, 0.0..self.width as f32);
+        let y_scale = Scale::new(self.ymin..self.ymax, 0.0..self.height as f32);
+
+        if self.xmin <= 0.0 && self.xmax >= 0.0 {
+            self.vline(x_scale.linear(0.0) as u32);
+        }
+        if self.ymin <= 0.0 && self.ymax >= 0.0 {
+            self.hline(y_scale.linear(0.0) as u32);
+        }
+    }
+
+    // Show figures
+    pub fn figures(&mut self) {
+        for shape in &self.shapes {
+            let x_scale = Scale::new(self.xmin..self.xmax, 0.0..self.width as f32);
+            let y_scale = Scale::new(self.ymin..self.ymax, 0.0..self.height as f32);
+
+            // translate (x, y) points into screen coordinates
+            let points: Vec<_> = match shape {
+                Shape::Continuous(f) => (0..self.width)
+                    .into_iter()
+                    .filter_map(|i| {
+                        let x = x_scale.inv_linear(i as f32);
+                        let y = f(x);
+                        if y.is_normal() {
+                            let j = y_scale.linear(y).round();
+                            Some((i, self.height - j as u32))
+                        } else {
+                            None
+                        }
+                    })
+                    .collect(),
+                Shape::Points(dt) | Shape::Lines(dt) | Shape::Steps(dt) | Shape::Bars(dt) => dt
+                    .into_iter()
+                    .filter_map(|(x, y)| {
+                        let i = x_scale.linear(*x).round() as u32;
+                        let j = y_scale.linear(*y).round() as u32;
+                        if i <= self.width && j <= self.height {
+                            Some((i, self.height - j))
+                        } else {
+                            None
+                        }
+                    })
+                    .collect(),
+            };
+
+            // display segments
+            match shape {
+                Shape::Continuous(_) | Shape::Lines(_) => {
+                    for pair in points.windows(2) {
+                        let (x1, y1) = pair[0];
+                        let (x2, y2) = pair[1];
+
+                        self.canvas.line(x1, y1, x2, y2);
+                    }
+                }
+                Shape::Points(_) => {
+                    for (x, y) in points {
+                        self.canvas.set(x, y);
+                    }
+                }
+                Shape::Steps(_) => {
+                    for pair in points.windows(2) {
+                        let (x1, y1) = pair[0];
+                        let (x2, y2) = pair[1];
+
+                        self.canvas.line(x1, y2, x2, y2);
+                        self.canvas.line(x1, y1, x1, y2);
+                    }
+                }
+                Shape::Bars(_) => {
+                    for pair in points.windows(2) {
+                        let (x1, y1) = pair[0];
+                        let (x2, y2) = pair[1];
+
+                        self.canvas.line(x1, y2, x2, y2);
+                        self.canvas.line(x1, y1, x1, y2);
+                        self.canvas.line(x1, self.height, x1, y1);
+                        self.canvas.line(x2, self.height, x2, y2);
+                    }
+                }
+            }
+        }
     }
 
     /// Return the frame
@@ -197,8 +289,11 @@ impl Chart {
     }
 }
 
-impl Plot for Chart {
-    fn lineplot(&mut self, shape: Shape) -> &mut Chart {
+impl<'a> Plot<'a> for Chart<'a> {
+    fn lineplot(&'a mut self, shape: &'a Shape) -> &'a mut Chart {
+        self.shapes.push(shape);
+
+        // rescale ymin and ymax
         let x_scale = Scale::new(self.xmin..self.xmax, 0.0..self.width as f32);
 
         let ys: Vec<_> = match shape {
@@ -237,82 +332,6 @@ impl Plot for Chart {
 
         self.ymin = f32::min(self.ymin, ymin);
         self.ymax = f32::max(self.ymax, ymax);
-
-        let y_scale = Scale::new(self.ymin..self.ymax, 0.0..self.height as f32);
-
-        // show axis
-        if self.xmin <= 0.0 && self.xmax >= 0.0 {
-            self.vline(x_scale.linear(0.0) as u32);
-        }
-        if self.ymin <= 0.0 && self.ymax >= 0.0 {
-            self.hline(y_scale.linear(0.0) as u32);
-        }
-
-        // translate (x, y) points into screen coordinates
-        let points: Vec<_> = match shape {
-            Shape::Continuous(f) => (0..self.width)
-                .into_iter()
-                .filter_map(|i| {
-                    let x = x_scale.inv_linear(i as f32);
-                    let y = f(x);
-                    if y.is_normal() {
-                        let j = y_scale.linear(y).round();
-                        Some((i, self.height - j as u32))
-                    } else {
-                        None
-                    }
-                })
-                .collect(),
-            Shape::Points(dt) | Shape::Lines(dt) | Shape::Steps(dt) | Shape::Bars(dt) => dt
-                .into_iter()
-                .filter_map(|(x, y)| {
-                    let i = x_scale.linear(*x).round() as u32;
-                    let j = y_scale.linear(*y).round() as u32;
-                    if i <= self.width && j <= self.height {
-                        Some((i, self.height - j))
-                    } else {
-                        None
-                    }
-                })
-                .collect(),
-        };
-
-        // display segments
-        match shape {
-            Shape::Continuous(_) | Shape::Lines(_) => {
-                for pair in points.windows(2) {
-                    let (x1, y1) = pair[0];
-                    let (x2, y2) = pair[1];
-
-                    self.canvas.line(x1, y1, x2, y2);
-                }
-            }
-            Shape::Points(_) => {
-                for (x, y) in points {
-                    self.canvas.set(x, y);
-                }
-            }
-            Shape::Steps(_) => {
-                for pair in points.windows(2) {
-                    let (x1, y1) = pair[0];
-                    let (x2, y2) = pair[1];
-
-                    self.canvas.line(x1, y2, x2, y2);
-                    self.canvas.line(x1, y1, x1, y2);
-                }
-            }
-            Shape::Bars(_) => {
-                for pair in points.windows(2) {
-                    let (x1, y1) = pair[0];
-                    let (x2, y2) = pair[1];
-
-                    self.canvas.line(x1, y2, x2, y2);
-                    self.canvas.line(x1, y1, x1, y2);
-                    self.canvas.line(x1, self.height, x1, y1);
-                    self.canvas.line(x2, self.height, x2, y2);
-                }
-            }
-        }
 
         self
     }
