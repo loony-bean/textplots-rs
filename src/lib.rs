@@ -171,8 +171,8 @@ impl<'a> Chart<'a> {
         self.axis();
 
         let frame = self.canvas.frame();
-        let rows = frame.split('\n').into_iter().count();
-        for (i, row) in frame.split('\n').into_iter().enumerate() {
+        let rows = frame.split('\n').count();
+        for (i, row) in frame.split('\n').enumerate() {
             if i == 0 {
                 println!("{0} {1:.1}", row, self.ymax);
             } else if i == (rows - 1) {
@@ -218,7 +218,6 @@ impl<'a> Chart<'a> {
             // translate (x, y) points into screen coordinates
             let points: Vec<_> = match shape {
                 Shape::Continuous(f) => (0..self.width)
-                    .into_iter()
                     .filter_map(|i| {
                         let x = x_scale.inv_linear(i as f32);
                         let y = f(x);
@@ -231,7 +230,7 @@ impl<'a> Chart<'a> {
                     })
                     .collect(),
                 Shape::Points(dt) | Shape::Lines(dt) | Shape::Steps(dt) | Shape::Bars(dt) => dt
-                    .into_iter()
+                    .iter()
                     .filter_map(|(x, y)| {
                         let i = x_scale.linear(*x).round() as u32;
                         let j = y_scale.linear(*y).round() as u32;
@@ -298,7 +297,6 @@ impl<'a> Plot<'a> for Chart<'a> {
 
         let ys: Vec<_> = match shape {
             Shape::Continuous(f) => (0..self.width)
-                .into_iter()
                 .filter_map(|i| {
                     let x = x_scale.inv_linear(i as f32);
                     let y = f(x);
