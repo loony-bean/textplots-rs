@@ -18,9 +18,7 @@ impl Scale {
     pub fn linear(&self, x: f32) -> f32 {
         let p = (x - self.domain.start) / (self.domain.end - self.domain.start);
         let r = self.range.start + p * (self.range.end - self.range.start);
-        let r = r.max(self.range.start);
-        let r = r.min(self.range.end);
-        r
+        r.max(self.range.start).min(self.range.end)
     }
 
     /// Translates value from range to domain scale.
@@ -32,10 +30,7 @@ impl Scale {
     pub fn inv_linear(&self, i: f32) -> f32 {
         let p = (i - self.range.start) / (self.range.end - self.range.start);
         let d = self.domain.start + p * (self.domain.end - self.domain.start);
-
-        let d = d.max(self.domain.start);
-        let d = d.min(self.domain.end);
-        d
+        d.max(self.domain.start).min(self.domain.end)
     }
 
     pub fn new(domain: Range<f32>, range: Range<f32>) -> Self {
