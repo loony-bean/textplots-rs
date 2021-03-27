@@ -1,32 +1,38 @@
-extern crate textplots;
+#![feature(box_syntax)]
 
 use textplots::{Chart, Plot, Shape};
 
 fn main() {
-    // You can pass any real value function
+    // You can pass any real value function.
     println!("y = atan(x)");
     Chart::default()
-        .lineplot(&Shape::Continuous(|x| x.atan()))
+        .lineplot(&Shape::Continuous(box |x| x.atan()))
         .display();
 
-    // The plot try to display everything that is a `normal` float, skipping NaN's and friends
+    // The same done with a stable Box syntax.
+    println!("y = atan(x)");
+    Chart::default()
+        .lineplot(&Shape::Continuous(Box::new(|x| x.atan())))
+        .display();
+
+    // The plot try to display everything that is a `normal` float, skipping NaN's and friends.
     println!("\ny = sin(x) / x");
     Chart::default()
-        .lineplot(&Shape::Continuous(|x| x.sin() / x))
+        .lineplot(&Shape::Continuous(box |x| x.sin() / x))
         .display();
 
     // Default viewport size is 120 x 60 points, with X values ranging from -10 to 10.
     println!("\ny = ln(x)");
     Chart::default()
-        .lineplot(&Shape::Continuous(f32::ln))
+        .lineplot(&Shape::Continuous(box f32::ln))
         .display();
 
     // You can plot several functions on the same chart.
     // However the resolution of text displays is low, and the result might not be great.
     println!("\ny = cos(x), y = sin(x) / 2");
     Chart::new(180, 60, -5.0, 5.0)
-        .lineplot(&Shape::Continuous(|x| x.cos()))
-        .lineplot(&Shape::Continuous(|x| x.sin() / 2.0))
+        .lineplot(&Shape::Continuous(box |x| x.cos()))
+        .lineplot(&Shape::Continuous(box |x| x.sin() / 2.0))
         .display();
 
     let points = [

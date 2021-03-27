@@ -12,13 +12,13 @@ or another cool terminal plotting library.
 Contributions are very much welcome!
 
 ```rust
-extern crate textplots;
+#![feature(box_syntax)]
 
 use textplots::{Chart, Plot, Shape};
 
 fn main() {
     println!("y = sin(x) / x");
-    Chart::default().lineplot(&Shape::Continuous(|x| x.sin() / x)).display();
+    Chart::default().lineplot(&Shape::Continuous(box |x| x.sin() / x)).display();
 }
 ```
 

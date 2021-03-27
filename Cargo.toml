@@ -1,16 +1,27 @@
 [package]
 name = "textplots"
 description = "Terminal plotting library."
-version = "0.5.4"
+version = "0.6.0"
 authors = ["Alexey Suslov <alexey.suslov@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/loony-bean/textplots-rs"
 keywords = ["plotting", "unicode", "charts"]
 categories = ["visualization"]
 readme = "README.md"
+edition = "2018"
+
+[lib]
+name = "textplots"
+path = "src/lib.rs"
+
+[[bin]]
+name = "textplots"
+path = "src/main.rs"
 
 [badges]
 travis-ci = { repository = "loony-bean/textplots-rs", branch = "master" }
 
 [dependencies]
 drawille = "0.2.3"
+clap = "2.33"
+meval = "0.2"

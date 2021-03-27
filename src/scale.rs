@@ -11,7 +11,6 @@ pub struct Scale {
 impl Scale {
     /// Translates value from domain to range scale.
     /// ```
-    /// # extern crate textplots;
     /// # use textplots::scale::Scale;
     /// assert_eq!(-0.8, Scale::new(0_f32..10_f32, -1_f32..1_f32).linear(1.0));
     /// ```
@@ -23,7 +22,6 @@ impl Scale {
 
     /// Translates value from range to domain scale.
     /// ```
-    /// # extern crate textplots;
     /// # use textplots::scale::Scale;
     /// assert_eq!(5.5, Scale::new(0_f32..10_f32, -1_f32..1_f32).inv_linear(0.1));
     /// ```

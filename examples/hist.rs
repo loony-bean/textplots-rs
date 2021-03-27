@@ -1,5 +1,3 @@
-extern crate textplots;
-
 use textplots::{utils, Chart, Plot, Shape};
 
 fn main() {
