@@ -1,11 +1,8 @@
-#![feature(box_syntax)]
-
 use textplots::{Chart, Plot, Shape};
 use clap::{Arg, App};
 use std::process::exit;
 
 fn main() {
-    // automate with `env!()`?
     let matches = App::new(env!("CARGO_BIN_NAME"))
       .version(env!("CARGO_PKG_VERSION"))
       .author(env!("CARGO_PKG_AUTHORS"))
@@ -31,6 +28,6 @@ fn main() {
 
     println!("y = {}", formula);
     Chart::default()
-    	.lineplot(&Shape::Continuous(box |x| func(x.into()) as f32))
+    	.lineplot(&Shape::Continuous(Box::new(|x| func(x.into()) as f32)))
     	.display();
 }

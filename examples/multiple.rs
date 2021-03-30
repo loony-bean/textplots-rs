@@ -1,5 +1,3 @@
-#![feature(box_syntax)]
-
 use textplots::{Chart, Plot, Shape};
 
 fn main() {
@@ -7,8 +5,8 @@ fn main() {
     // https://github.com/loony-bean/textplots-rs/issues/8
     println!("y = -x^2; y = x^2");
     Chart::default()
-        .lineplot(&Shape::Continuous(box |x| (-x.powf(2.0))))
-        .lineplot(&Shape::Continuous(box |x| (x.powf(2.0))))
+        .lineplot(&Shape::Continuous(Box::new(|x| (-x.powf(2.0)))))
+        .lineplot(&Shape::Continuous(Box::new(|x| (x.powf(2.0)))))
         .display();
 
     // https://github.com/loony-bean/textplots-rs/issues/15

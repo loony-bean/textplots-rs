@@ -16,15 +16,32 @@
 //! ```
 //!
 //! ```rust
-//! #![feature(box_syntax)]
-//!
 //! use textplots::{Chart, Plot, Shape};
 //!
 //! fn main() {
 //!     println!("y = sin(x) / x");
-//!     Chart::default().lineplot(&Shape::Continuous(box |x| x.sin() / x)).display();
+//!
+//!     Chart::default()
+//!     	.lineplot(&Shape::Continuous(Box::new(|x| x.sin() / x)))
+//!     	.display();
 //! }
 //! ```
+//!
+//! ...or with `box_syntax` feature...
+//!
+//! ```rust
+//! #![feature(box_syntax)]
+//! use textplots::{Chart, Plot, Shape};
+//!
+//! fn main() {
+//!     println!("y = sin(x) / x");
+//!
+//!     Chart::default()
+//!     	.lineplot(&Shape::Continuous(box |x| x.sin() / x))
+//!     	.display();
+//! }
+//! ```
+//!
 //! It will display something like this:
 //!
 //! <img src="https://github.com/loony-bean/textplots-rs/blob/master/doc/demo.png?raw=true"/>
@@ -33,22 +50,21 @@
 //! You can override the defaults calling `new`.
 //!
 //! ```rust
-//! #![feature(box_syntax)]
-//!
 //! use textplots::{Chart, Plot, Shape};
 //!
 //! println!("y = cos(x), y = sin(x) / 2");
+//!
 //! Chart::new(180, 60, -5.0, 5.0)
-//!     .lineplot(&Shape::Continuous(box |x| x.cos()))
-//!     .lineplot(&Shape::Continuous(box |x| x.sin() / 2.0))
+//!     .lineplot(&Shape::Continuous(Box::new(|x| x.cos())))
+//!     .lineplot(&Shape::Continuous(Box::new(|x| x.sin() / 2.0)))
 //!     .display();
 //! ```
+//!
 //! <img src="https://github.com/loony-bean/textplots-rs/blob/master/doc/demo2.png?raw=true"/>
 //!
 //! You could also plot series of points. See [Shape](enum.Shape.html) and [examples](https://github.com/loony-bean/textplots-rs/tree/master/examples) for more details.
 //!
 //! <img src="https://github.com/loony-bean/textplots-rs/blob/master/doc/demo3.png?raw=true"/>
-//!
 
 pub mod scale;
 pub mod utils;
