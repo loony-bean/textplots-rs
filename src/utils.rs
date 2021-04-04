@@ -7,7 +7,6 @@
 /// falls into the specified interval is grouped into `bins` number of buckets of equal width.
 ///
 /// ```
-/// # extern crate textplots;
 /// # use textplots::utils::histogram;
 /// assert_eq!(vec![(0.0, 1.0), (5.0, 1.0)], histogram( &[ (0.0, 0.0), (9.0, 9.0), (10.0, 10.0) ], 0.0, 10.0, 2 ));
 /// ```

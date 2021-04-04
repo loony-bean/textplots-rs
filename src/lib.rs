@@ -12,19 +12,36 @@
 //! # Usage
 //! ```toml
 //! [dependencies]
-//! textplots = "0.5"
+//! textplots = "0.6"
 //! ```
 //!
 //! ```rust
-//! extern crate textplots;
-//!
 //! use textplots::{Chart, Plot, Shape};
 //!
 //! fn main() {
 //!     println!("y = sin(x) / x");
-//!     Chart::default().lineplot(&Shape::Continuous(|x| x.sin() / x)).display();
+//!
+//!     Chart::default()
+//!     	.lineplot(&Shape::Continuous(Box::new(|x| x.sin() / x)))
+//!     	.display();
 //! }
 //! ```
+//!
+//! ...or with `box_syntax` feature...
+//!
+//! ```rust
+//! #![feature(box_syntax)]
+//! use textplots::{Chart, Plot, Shape};
+//!
+//! fn main() {
+//!     println!("y = sin(x) / x");
+//!
+//!     Chart::default()
+//!     	.lineplot(&Shape::Continuous(box |x| x.sin() / x))
+//!     	.display();
+//! }
+//! ```
+//!
 //! It will display something like this:
 //!
 //! <img src="https://github.com/loony-bean/textplots-rs/blob/master/doc/demo.png?raw=true"/>
@@ -36,19 +53,18 @@
 //! use textplots::{Chart, Plot, Shape};
 //!
 //! println!("y = cos(x), y = sin(x) / 2");
+//!
 //! Chart::new(180, 60, -5.0, 5.0)
-//!     .lineplot(&Shape::Continuous(|x| x.cos()))
-//!     .lineplot(&Shape::Continuous(|x| x.sin() / 2.0))
+//!     .lineplot(&Shape::Continuous(Box::new(|x| x.cos())))
+//!     .lineplot(&Shape::Continuous(Box::new(|x| x.sin() / 2.0)))
 //!     .display();
 //! ```
+//!
 //! <img src="https://github.com/loony-bean/textplots-rs/blob/master/doc/demo2.png?raw=true"/>
 //!
 //! You could also plot series of points. See [Shape](enum.Shape.html) and [examples](https://github.com/loony-bean/textplots-rs/tree/master/examples) for more details.
 //!
 //! <img src="https://github.com/loony-bean/textplots-rs/blob/master/doc/demo3.png?raw=true"/>
-//!
-
-extern crate drawille;
 
 pub mod scale;
 pub mod utils;
@@ -61,28 +77,28 @@ use std::f32;
 
 /// Controls the drawing.
 pub struct Chart<'a> {
-    /// Canvas width in points
+    /// Canvas width in points.
     width: u32,
-    /// Canvas height in points
+    /// Canvas height in points.
     height: u32,
-    /// X-axis start value
+    /// X-axis start value.
     xmin: f32,
-    /// X-axis end value
+    /// X-axis end value.
     xmax: f32,
-    /// Y-axis start value (calculated automatically to display all the domain values)
+    /// Y-axis start value (calculated automatically to display all the domain values).
     ymin: f32,
-    /// Y-axis end value (calculated automatically to display all the domain values)
+    /// Y-axis end value (calculated automatically to display all the domain values).
     ymax: f32,
-    /// Collection of shapes to be presented on the canvas
+    /// Collection of shapes to be presented on the canvas.
     shapes: Vec<&'a Shape<'a>>,
-    /// Underlying canvas object
+    /// Underlying canvas object.
     canvas: BrailleCanvas,
 }
 
 /// Specifies different kinds of plotted data.
 pub enum Shape<'a> {
-    /// Real value function
-    Continuous(fn(f32) -> f32),
+    /// Real value function.
+    Continuous(Box<dyn Fn(f32) -> f32 + 'a>),
     /// Points of a scatter plot.
     Points(&'a [(f32, f32)]),
     /// Points connected with lines.
@@ -196,7 +212,7 @@ impl<'a> Chart<'a> {
         self.display();
     }
 
-    /// Show axis
+    /// Show axis.
     pub fn axis(&mut self) {
         let x_scale = Scale::new(self.xmin..self.xmax, 0.0..self.width as f32);
         let y_scale = Scale::new(self.ymin..self.ymax, 0.0..self.height as f32);
@@ -209,7 +225,7 @@ impl<'a> Chart<'a> {
         }
     }
 
-    // Show figures
+    // Show figures.
     pub fn figures(&mut self) {
         for shape in &self.shapes {
             let x_scale = Scale::new(self.xmin..self.xmax, 0.0..self.width as f32);
@@ -282,7 +298,7 @@ impl<'a> Chart<'a> {
         }
     }
 
-    /// Return the frame
+    /// Return the frame.
     pub fn frame(&self) -> String {
         self.canvas.frame()
     }
