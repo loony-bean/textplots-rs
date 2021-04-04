@@ -27,21 +27,6 @@
 //! }
 //! ```
 //!
-//! ...or with `box_syntax` feature...
-//!
-//! ```rust
-//! #![feature(box_syntax)]
-//! use textplots::{Chart, Plot, Shape};
-//!
-//! fn main() {
-//!     println!("y = sin(x) / x");
-//!
-//!     Chart::default()
-//!     	.lineplot(&Shape::Continuous(box |x| x.sin() / x))
-//!     	.display();
-//! }
-//! ```
-//!
 //! It will display something like this:
 //!
 //! <img src="https://github.com/loony-bean/textplots-rs/blob/master/doc/demo.png?raw=true"/>

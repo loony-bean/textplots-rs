@@ -13,6 +13,8 @@ Contributions are very much welcome!
 
 # Usage
 
+## Using as a library
+
 ```rust
 use textplots::{Chart, Plot, Shape};
 
@@ -25,19 +27,11 @@ fn main() {
 }
 ```
 
-With `box_syntax` feature:
+## Using as a binary
 
-```rust
-#[feature(box_syntax)]
-use textplots::{Chart, Plot, Shape};
-
-fn main() {
-    println!("y = sin(x) / x");
-    
-    Chart::default()
-        .lineplot(&Shape::Continuous(box |x| x.sin() / x))
-        .display();
-}
+```sh
+$ textplots '10*x + x^2 + 10*sin(x)*abs(x)' --xmin=-20 --xmax=20
 ```
-
 <img src="https://raw.githubusercontent.com/loony-bean/textplots-rs/master/doc/demo.png">
+
+<img src="https://raw.githubusercontent.com/loony-bean/textplots-rs/master/doc/demo4.png">

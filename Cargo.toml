@@ -23,5 +23,5 @@ travis-ci = { repository = "loony-bean/textplots-rs", branch = "master" }
 
 [dependencies]
 drawille = "0.2.3"
-clap = "2.33"
+structopt = "0.3"
 meval = "0.2"
