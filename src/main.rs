@@ -1,5 +1,5 @@
-use structopt::StructOpt;
 use std::process::exit;
+use structopt::StructOpt;
 use textplots::{Chart, Plot, Shape};
 
 #[derive(StructOpt)]
@@ -24,7 +24,10 @@ struct Opt {
 fn main() {
     let opt = Opt::from_args();
 
-    let res = opt.formula.parse().and_then(|expr: meval::Expr| expr.bind("x"));
+    let res = opt
+        .formula
+        .parse()
+        .and_then(|expr: meval::Expr| expr.bind("x"));
     let func = match res {
         Ok(func) => func,
         Err(err) => {
