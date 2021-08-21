@@ -62,6 +62,15 @@ use std::cmp;
 use std::default::Default;
 use std::f32;
 
+/// How the chart will do the ranging on axes
+#[derive(PartialEq)]
+enum ChartRangeMethod {
+    /// Automatically ranges based on input data
+    AutoRange,
+    /// Has a fixed range between the given min & max
+    FixedRange,
+}
+
 /// Controls the drawing.
 pub struct Chart<'a> {
     /// Canvas width in points.
@@ -72,10 +81,12 @@ pub struct Chart<'a> {
     xmin: f32,
     /// X-axis end value.
     xmax: f32,
-    /// Y-axis start value (calculated automatically to display all the domain values).
+    /// Y-axis start value (potentially calculated automatically).
     ymin: f32,
-    /// Y-axis end value (calculated automatically to display all the domain values).
+    /// Y-axis end value (potentially calculated automatically).
     ymax: f32,
+    /// The type of y axis ranging we'll do
+    y_ranging: ChartRangeMethod,
     /// Collection of shapes to be presented on the canvas.
     shapes: Vec<(&'a Shape<'a>, Option<RGB8>)>,
     /// Underlying canvas object.
@@ -134,6 +145,41 @@ impl<'a> Chart<'a> {
             xmax,
             ymin: f32::INFINITY,
             ymax: f32::NEG_INFINITY,
+            y_ranging: ChartRangeMethod::AutoRange,
+            width,
+            height,
+            shapes: Vec::new(),
+            canvas: BrailleCanvas::new(width, height),
+        }
+    }
+
+    /// Creates a new `Chart` object with fixed y axis range.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `width` or `height` is less than 32.
+    pub fn new_with_y_range(
+        width: u32,
+        height: u32,
+        xmin: f32,
+        xmax: f32,
+        ymin: f32,
+        ymax: f32,
+    ) -> Self {
+        if width < 32 {
+            panic!("width should be more then 32, {} is provided", width);
+        }
+
+        if height < 32 {
+            panic!("height should be more then 32, {} is provided", height);
+        }
+
+        Self {
+            xmin,
+            xmax,
+            ymin,
+            ymax,
+            y_ranging: ChartRangeMethod::FixedRange,
             width,
             height,
             shapes: Vec::new(),
@@ -359,7 +405,9 @@ impl<'a> Chart<'a> {
 impl<'a> ColorPlot<'a> for Chart<'a> {
     fn linecolorplot(&'a mut self, shape: &'a Shape, color: RGB8) -> &'a mut Chart {
         self.shapes.push((shape, Some(color)));
-        self.rescale(shape);
+        if self.y_ranging == ChartRangeMethod::AutoRange {
+            self.rescale(shape);
+        }
         self
     }
 }
@@ -367,7 +415,9 @@ impl<'a> ColorPlot<'a> for Chart<'a> {
 impl<'a> Plot<'a> for Chart<'a> {
     fn lineplot(&'a mut self, shape: &'a Shape) -> &'a mut Chart {
         self.shapes.push((shape, None));
-        self.rescale(shape);
+        if self.y_ranging == ChartRangeMethod::AutoRange {
+            self.rescale(shape);
+        }
         self
     }
 }
