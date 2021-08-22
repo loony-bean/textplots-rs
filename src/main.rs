@@ -13,6 +13,12 @@ struct Opt {
     /// X-axis end value.
     #[structopt(long, default_value = "10.0")]
     xmax: f32,
+    /// Y-axis start value.
+    #[structopt(long)]
+    ymin: Option<f32>,
+    /// X-axis end value.
+    #[structopt(long)]
+    ymax: Option<f32>,
     /// Canvas width in points.
     #[structopt(short, long, default_value = "180")]
     width: u32,
@@ -39,8 +45,26 @@ fn main() {
         }
     };
 
+    // check for invalid ymin/ymax
+    if (opt.ymax.is_none() && opt.ymin.is_some()) || (opt.ymax.is_some() && opt.ymin.is_none()) {
+        eprintln!("both ymin and ymax must be specified");
+        exit(2);
+    }
+
     println!("y = {}", opt.formula);
-    Chart::new(opt.width, opt.height, opt.xmin, opt.xmax)
+    let mut chart = if opt.ymin.is_none() {
+        Chart::new(opt.width, opt.height, opt.xmin, opt.xmax)
+    } else {
+        Chart::new_with_y_range(
+            opt.width,
+            opt.height,
+            opt.xmin,
+            opt.xmax,
+            opt.ymin.unwrap(),
+            opt.ymax.unwrap(),
+        )
+    };
+    chart
         .lineplot(&Shape::Continuous(Box::new(|x| func(x.into()) as f32)))
         .display();
 }
