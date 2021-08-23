@@ -47,4 +47,12 @@ fn main() {
 
     println!("\ny = scatter plot");
     Chart::default().lineplot(&Shape::Points(&points)).display();
+
+    // You can instead get the raw string value
+    println!("\nRender to string (and then print that string)");
+    let chart = Chart::default()
+        .lineplot(&Shape::Continuous(Box::new(|x| x.atan())))
+        .to_string();
+
+    println!("{}", chart);
 }
