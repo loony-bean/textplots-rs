@@ -20,14 +20,14 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         profile: minimal
-        toolchain: nightly
+        toolchain: stable
         override: true
         components: clippy
     - name: Checkout Sources
       uses: actions/checkout@v2
     - name: Build & Test Project
       run: |
-        cargo build --examples
+        cargo run --examples
         cargo test
     - name: clippy
       uses: actions-rs/clippy-check@v1
