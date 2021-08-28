@@ -33,4 +33,4 @@ jobs:
       uses: actions-rs/clippy-check@v1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        name: texplot-rs clippy
+        name: textplots-rs clippy

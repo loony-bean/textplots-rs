@@ -1,7 +1,7 @@
 [package]
 name = "textplots"
 description = "Terminal plotting library."
-version = "0.7.0"
+version = "0.8.0"
 authors = ["Alexey Suslov <alexey.suslov@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/loony-bean/textplots-rs"
