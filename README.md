@@ -1,4 +1,4 @@
-# textplots [![Crates.io](https://img.shields.io/crates/v/textplots.svg)](https://crates.io/crates/textplots) [![Build Status](https://travis-ci.org/loony-bean/textplots-rs.svg?branch=master)](https://travis-ci.org/loony-bean/textplots-rs)
+# textplots [![Crates.io](https://img.shields.io/crates/v/textplots.svg)](https://crates.io/crates/textplots)
 
 Terminal plotting library for using in Rust CLI applications.
 Should work well in any unicode terminal with monospaced font.
@@ -20,7 +20,7 @@ use textplots::{Chart, Plot, Shape};
 
 fn main() {
     println!("y = sin(x) / x");
-    
+
     Chart::default()
         .lineplot(&Shape::Continuous(Box::new(|x| x.sin() / x)))
         .display();
