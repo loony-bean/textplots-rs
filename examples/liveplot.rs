@@ -9,6 +9,8 @@ const PURPLE: rgb::RGB8 = rgb::RGB8::new(0xE0, 0x80, 0xFF);
 const RED: rgb::RGB8 = rgb::RGB8::new(0xFF, 0x00, 0x00);
 const GREEN: rgb::RGB8 = rgb::RGB8::new(0x00, 0xFF, 0x00);
 
+const RUN_DURATION_S: u64 = 5;
+
 fn main() {
     let should_run = Arc::new(AtomicBool::new(true));
     let should_run_ctrlc_ref = should_run.clone();
@@ -20,20 +22,22 @@ fn main() {
     // hide the cursor so we don't see it flying all over
     let term = console::Term::stdout();
     term.hide_cursor().unwrap();
+    term.clear_screen().unwrap();
 
     // On ctrl+C, reset terminal settings and let the thread know to stop
     ctrlc::set_handler(move || {
-        let term = console::Term::stdout();
-        term.show_cursor().unwrap();
         should_run_ctrlc_ref
             .as_ref()
             .store(false, Ordering::Relaxed);
     })
     .unwrap();
 
-    // run until we get ctrl+C
+    // run until we get ctrl+C or timeout
     let mut time: f32 = 0.;
-    while should_run.as_ref().load(Ordering::Acquire) {
+    let start_time = std::time::SystemTime::now();
+    while should_run.as_ref().load(Ordering::Acquire)
+        && start_time.elapsed().unwrap().as_secs() < RUN_DURATION_S
+    {
         // update our plotting data
         let x_val = time.sin();
         let y_val = (time + std::f32::consts::FRAC_PI_3).sin();
@@ -62,4 +66,8 @@ fn main() {
 
         std::thread::sleep(std::time::Duration::from_millis(10));
     }
+
+    // re-reveal the cursor
+    let term = console::Term::stdout();
+    term.show_cursor().unwrap();
 }
