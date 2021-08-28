@@ -27,7 +27,7 @@ jobs:
       uses: actions/checkout@v2
     - name: Build & Test Project
       run: |
-        cargo run --examples
+        ./run_examples.sh
         cargo test
     - name: clippy
       uses: actions-rs/clippy-check@v1
