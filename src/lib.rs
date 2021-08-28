@@ -174,29 +174,27 @@ impl<'a> Chart<'a> {
         }
     }
 
-    /// Prints canvas content.
-    pub fn display(&mut self) {
+    pub fn to_string(&mut self) -> String {
         self.figures();
         self.axis();
 
-        let frame = self.canvas.frame();
-        let rows = frame.split('\n').count();
-        for (i, row) in frame.split('\n').enumerate() {
-            if i == 0 {
-                println!("{0} {1:.1}", row, self.ymax);
-            } else if i == (rows - 1) {
-                println!("{0} {1:.1}", row, self.ymin);
-            } else {
-                println!("{}", row);
-            }
+        let mut frame = self.canvas.frame();
+        if let Some(idx) = frame.find('\n') {
+            frame.insert_str(idx, &format!(" {0:.1}", self.ymax));
+            frame.push_str(&format!(
+                " {0:.1}\n{1: <width$.1}{2:.1}\n",
+                self.ymin,
+                self.xmin,
+                self.xmax,
+                width = (self.width as usize) / 2 - 3
+            ));
         }
+        frame
+    }
 
-        println!(
-            "{0: <width$.1}{1:.1}",
-            self.xmin,
-            self.xmax,
-            width = (self.width as usize) / 2 - 3
-        );
+    /// Prints canvas content.
+    pub fn display(&mut self) {
+        println!("{}", self.to_string());
     }
 
     /// Prints canvas content with some additional visual elements (like borders).
