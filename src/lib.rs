@@ -89,6 +89,10 @@ pub struct Chart<'a> {
     shapes: Vec<(&'a Shape<'a>, Option<RGB8>)>,
     /// Underlying canvas object.
     canvas: BrailleCanvas,
+    /// Function to apply to X-axis ticks (e.g. for adding units or formatting as date)
+    xformatter: Option<Box<dyn Fn(f32) -> String>>,
+    /// Function to apply to Y-axis ticks (e.g. for adding units)
+    yformatter: Option<Box<dyn Fn(f32) -> String>>,
 }
 
 /// Specifies different kinds of plotted data.
@@ -148,6 +152,8 @@ impl<'a> Chart<'a> {
             height,
             shapes: Vec::new(),
             canvas: BrailleCanvas::new(width, height),
+            xformatter: None,
+            yformatter: None,
         }
     }
 
@@ -182,6 +188,8 @@ impl<'a> Chart<'a> {
             height,
             shapes: Vec::new(),
             canvas: BrailleCanvas::new(width, height),
+            xformatter: None,
+            yformatter: None,
         }
     }
 
@@ -218,19 +226,48 @@ impl<'a> Chart<'a> {
         }
     }
 
+    fn format_xaxis_tick(&self, value: f32) -> String {
+        if let Some(ref f) = self.xformatter {
+            f(value)
+        } else {
+            format!("{:.1}", value)
+        }
+    }
+
+    fn format_yaxis_tick(&self, value: f32) -> String {
+        if let Some(ref f) = self.yformatter {
+            f(value)
+        } else {
+            format!("{:.1}", value)
+        }
+    }
+
+    pub fn xaxis_formatter<F: 'static + Fn(f32) -> String>(mut self, f: F) -> Self {
+        self.xformatter = Some(Box::new(f));
+        self
+    }
+
+    pub fn yaxis_formatter<F: 'static + Fn(f32) -> String>(mut self, f: F) -> Self {
+        self.yformatter = Some(Box::new(f));
+        self
+    }
+
     pub fn to_string(&mut self) -> String {
         self.figures();
         self.axis();
 
         let mut frame = self.canvas.frame();
         if let Some(idx) = frame.find('\n') {
-            frame.insert_str(idx, &format!(" {0:.1}", self.ymax));
+            let xmin = self.format_xaxis_tick(self.xmin);
+            let xmax = self.format_xaxis_tick(self.xmax);
+
+            frame.insert_str(idx, &format!(" {0}", self.format_yaxis_tick(self.ymax)));
             frame.push_str(&format!(
-                " {0:.1}\n{1: <width$.1}{2:.1}\n",
-                self.ymin,
-                self.xmin,
-                self.xmax,
-                width = (self.width as usize) / 2 - 3
+                " {0}\n{1: <width$}{2}\n",
+                self.format_yaxis_tick(self.ymin),
+                xmin,
+                xmax,
+                width = (self.width as usize) / 2 - xmax.len()
             ));
         }
         frame
