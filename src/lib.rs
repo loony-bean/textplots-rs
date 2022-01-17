@@ -253,8 +253,8 @@ impl<'a> Chart<'a> {
     }
 
     pub fn to_string(&mut self) -> String {
-        self.figures();
         self.axis();
+        self.figures();
 
         let mut frame = self.canvas.frame();
         if let Some(idx) = frame.find('\n') {
