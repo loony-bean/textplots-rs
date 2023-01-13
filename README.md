@@ -40,3 +40,17 @@ $ textplots '10*x + x^2 + 10*sin(x)*abs(x)' --xmin=-20 --xmax=20
 ## Bonus! Colored plots (see examples)
 
 <img src="https://raw.githubusercontent.com/loony-bean/textplots-rs/master/doc/demo5.png">
+
+# Building
+
+## Library
+
+```sh
+$ cargo build
+```
+
+## Binary
+
+```sh
+$ cargo build --bin --release textplots --features="tool"
+```
