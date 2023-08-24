@@ -222,7 +222,9 @@ impl<'a> Chart<'a> {
         self.figures();
         self.axis();
 
-        let mut frame = self.canvas.frame();
+        // get frame and replace space with U+2800 (BRAILLE PATTERN BLANK)
+        let mut frame = self.canvas.frame().replace(' ', "\u{2800}");
+
         if let Some(idx) = frame.find('\n') {
             frame.insert_str(idx, &format!(" {0:.1}", self.ymax));
             frame.push_str(&format!(
