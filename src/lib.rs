@@ -310,7 +310,12 @@ impl<'a> Chart<'a> {
                 }
                 Shape::Points(_) => {
                     for (x, y) in points {
-                        self.canvas.set(x, y);
+                        if let Some(color) = color {
+                            let color = rgb_to_pixelcolor(color);
+                            self.canvas.set_colored(x, y, color);
+                        } else {
+                            self.canvas.set(x, y);
+                        }
                     }
                 }
                 Shape::Steps(_) => {
