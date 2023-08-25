@@ -22,7 +22,7 @@ pub fn histogram(data: &[(f32, f32)], min: f32, max: f32, bins: usize) -> Vec<(f
 
         let bucket_id = ((y - min) / step) as usize;
         if bucket_id < output.len() {
-            output[bucket_id as usize] += 1;
+            output[bucket_id] += 1;
         }
     }
 
