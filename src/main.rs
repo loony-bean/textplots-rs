@@ -1,6 +1,6 @@
 use std::process::exit;
 use structopt::StructOpt;
-use textplots::{Chart, Plot, Shape};
+use textplots::{Chart, Plot, Shape, AxisStyle, AxisBuilder};
 
 #[derive(StructOpt)]
 struct Opt {
@@ -66,5 +66,7 @@ fn main() {
     };
     chart
         .lineplot(&Shape::Continuous(Box::new(|x| func(x.into()) as f32)))
+        .x_style(AxisStyle::Solid)
+        .y_style(AxisStyle::Solid)
         .display();
 }
