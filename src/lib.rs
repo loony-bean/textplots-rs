@@ -137,22 +137,22 @@ impl<'a> Default for Chart<'a> {
     }
 }
 
-/// Specifies different kinds of plotted data.
+/// Specifies axis styles.
+/// Default value is `AxisStyle::Dotted`.
 #[derive(Clone, Copy)]
 pub enum AxisStyle {
     /// Axis lines are not displayed.
     None,
-    /// Axis lines are solid
+    /// Axis lines are solid.
     Solid,
-    /// Axis lines are dotted
+    /// Axis lines are dotted.
     Dotted,
-    /// Axis lines are dashed
+    /// Axis lines are dashed.
     Dashed,
 }
 
 impl<'a> Display for Chart<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        // get frame and replace space with U+2800 (BRAILLE PATTERN BLANK)
         let mut frame = self.canvas.frame().replace(' ', "\u{2800}");
 
         if let Some(idx) = frame.find('\n') {
@@ -194,8 +194,8 @@ impl<'a> Chart<'a> {
             height,
             shapes: Vec::new(),
             canvas: BrailleCanvas::new(width, height),
-            x_style: AxisStyle::Solid,
-            y_style: AxisStyle::Solid,
+            x_style: AxisStyle::Dotted,
+            y_style: AxisStyle::Dotted,
         }
     }
 
@@ -230,8 +230,8 @@ impl<'a> Chart<'a> {
             height,
             shapes: Vec::new(),
             canvas: BrailleCanvas::new(width, height),
-            x_style: AxisStyle::Solid,
-            y_style: AxisStyle::Solid,
+            x_style: AxisStyle::Dotted,
+            y_style: AxisStyle::Dotted,
         }
     }
 
@@ -246,7 +246,7 @@ impl<'a> Chart<'a> {
         self.hline(h, AxisStyle::Dotted);
     }
 
-    /// Draws vertical line.
+    /// Draws vertical line of the specified style.
     fn vline(&mut self, i: u32, mode: AxisStyle) {
         match mode {
             AxisStyle::None => {}
@@ -279,7 +279,7 @@ impl<'a> Chart<'a> {
         }
     }
 
-    /// Draws horizontal line.
+    /// Draws horizontal line of the specified style.
     fn hline(&mut self, j: u32, mode: AxisStyle) {
         match mode {
             AxisStyle::None => {}
@@ -308,7 +308,7 @@ impl<'a> Chart<'a> {
                         }
                     }
                 }
-            },
+            }
         }
     }
 
@@ -326,13 +326,13 @@ impl<'a> Chart<'a> {
         self.display();
     }
 
-    /// Show axis.
+    /// Shows axis.
     pub fn axis(&mut self) {
         self.x_axis();
         self.y_axis();
     }
 
-    /// Show x-axis
+    /// Shows x-axis.
     pub fn x_axis(&mut self) {
         let y_scale = Scale::new(self.ymin..self.ymax, 0.0..self.height as f32);
 
@@ -341,7 +341,7 @@ impl<'a> Chart<'a> {
         }
     }
 
-    /// Show y-axis
+    /// Shows y-axis.
     pub fn y_axis(&mut self) {
         let x_scale = Scale::new(self.xmin..self.xmax, 0.0..self.width as f32);
 
@@ -350,7 +350,7 @@ impl<'a> Chart<'a> {
         }
     }
 
-    // Show figures.
+    // Shows figures.
     pub fn figures(&mut self) {
         for (shape, color) in &self.shapes {
             let x_scale = Scale::new(self.xmin..self.xmax, 0.0..self.width as f32);
@@ -446,7 +446,7 @@ impl<'a> Chart<'a> {
         }
     }
 
-    /// Return the frame.
+    /// Returns the frame.
     pub fn frame(&self) -> String {
         self.canvas.frame()
     }
