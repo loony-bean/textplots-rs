@@ -33,25 +33,25 @@ fn main() {
 
     for i in 0..segment_count {
         let angle: f32 = ((std::f64::consts::PI as f32 / 2.0) / segment_count as f32) * i as f32;
-        let angle_sin = angle.sin() as f32;
-        let angle_cos = angle.cos() as f32;
+        let angle_sin = angle.sin();
+        let angle_cos = angle.cos();
 
-        for j in 0..num_rings {
+        (0..num_rings).for_each(|j| {
             rings[j].push((
                 (min_radius + (ring_gap * j as f32)) * angle_cos,
                 (min_radius + (ring_gap * j as f32)) * angle_sin,
             ));
-        }
+        });
     }
 
-    for i in 0..num_rings {
+    (0..num_rings).for_each(|i| {
         let mut ring_copy = rings[i].clone();
         ring_copy.reverse();
         for coord in ring_copy.iter_mut() {
             coord.0 = 0.0 - coord.0;
         }
         rings[i].append(&mut ring_copy);
-    }
+    });
 
     let max_radius = min_radius + ((num_rings as f32 + 1.0) * ring_gap);
     Chart::new(180, 60, 0.0 - max_radius, max_radius)

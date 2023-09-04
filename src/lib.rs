@@ -59,6 +59,7 @@ use scale::Scale;
 use std::cmp;
 use std::default::Default;
 use std::f32;
+use std::fmt::{Display, Formatter, Result};
 
 /// How the chart will do the ranging on axes
 #[derive(PartialEq)]
@@ -89,6 +90,10 @@ pub struct Chart<'a> {
     shapes: Vec<(&'a Shape<'a>, Option<RGB8>)>,
     /// Underlying canvas object.
     canvas: BrailleCanvas,
+    /// x-axis style
+    x_style: LineStyle,
+    /// y-axis style
+    y_style: LineStyle,
 }
 
 /// Specifies different kinds of plotted data.
@@ -117,9 +122,52 @@ pub trait ColorPlot<'a> {
     fn linecolorplot(&'a mut self, shape: &'a Shape, color: RGB8) -> &'a mut Chart;
 }
 
+/// Provides a builder interface for styling axis.
+pub trait AxisBuilder<'a> {
+    /// Specifies the style of x-axis.
+    fn x_style(&'a mut self, style: LineStyle) -> &'a mut Chart<'a>;
+
+    /// Specifies the style of y-axis.
+    fn y_style(&'a mut self, style: LineStyle) -> &'a mut Chart<'a>;
+}
+
 impl<'a> Default for Chart<'a> {
     fn default() -> Self {
         Self::new(120, 60, -10.0, 10.0)
+    }
+}
+
+/// Specifies line style.
+/// Default value is `LineStyle::Dotted`.
+#[derive(Clone, Copy)]
+pub enum LineStyle {
+    /// Line is not displayed.
+    None,
+    /// Line is solid  (⠤⠤⠤).
+    Solid,
+    /// Line is dotted (⠄⠠⠀).
+    Dotted,
+    /// Line is dashed (⠤⠀⠤).
+    Dashed,
+}
+
+impl<'a> Display for Chart<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+
+        // get frame and replace space with U+2800 (BRAILLE PATTERN BLANK)
+        let mut frame = self.canvas.frame().replace(' ', "\u{2800}");
+
+        if let Some(idx) = frame.find('\n') {
+            frame.insert_str(idx, &format!(" {0:.1}", self.ymax));
+            frame.push_str(&format!(
+                " {0:.1}\n{1: <width$.1}{2:.1}\n",
+                self.ymin,
+                self.xmin,
+                self.xmax,
+                width = (self.width as usize) / 2 - 3
+            ));
+        }
+        write!(f, "{}", frame)
     }
 }
 
@@ -148,6 +196,8 @@ impl<'a> Chart<'a> {
             height,
             shapes: Vec::new(),
             canvas: BrailleCanvas::new(width, height),
+            x_style: LineStyle::Dotted,
+            y_style: LineStyle::Dotted,
         }
     }
 
@@ -182,6 +232,8 @@ impl<'a> Chart<'a> {
             height,
             shapes: Vec::new(),
             canvas: BrailleCanvas::new(width, height),
+            x_style: LineStyle::Dotted,
+            y_style: LineStyle::Dotted,
         }
     }
 
@@ -190,57 +242,84 @@ impl<'a> Chart<'a> {
         let w = self.width;
         let h = self.height;
 
-        self.vline(0);
-        self.vline(w);
-        self.hline(0);
-        self.hline(h);
+        self.vline(0, LineStyle::Dotted);
+        self.vline(w, LineStyle::Dotted);
+        self.hline(0, LineStyle::Dotted);
+        self.hline(h, LineStyle::Dotted);
     }
 
-    /// Draws vertical line.
-    fn vline(&mut self, i: u32) {
-        if i <= self.width {
-            for j in 0..=self.height {
-                if j % 3 == 0 {
-                    self.canvas.set(i, j);
+    /// Draws vertical line of the specified style.
+    fn vline(&mut self, i: u32, mode: LineStyle) {
+        match mode {
+            LineStyle::None => {}
+            LineStyle::Solid => {
+                if i <= self.width {
+                    for j in 0..=self.height {
+                        self.canvas.set(i, j);
+                    }
+                }
+            }
+            LineStyle::Dotted => {
+                if i <= self.width {
+                    for j in 0..=self.height {
+                        if j % 3 == 0 {
+                            self.canvas.set(i, j);
+                        }
+                    }
+                }
+            }
+            LineStyle::Dashed => {
+                if i <= self.width {
+                    for j in 0..=self.height {
+                        if j % 4 == 0 {
+                            self.canvas.set(i, j);
+                            self.canvas.set(i, j + 1);
+                        }
+                    }
                 }
             }
         }
     }
 
-    /// Draws horizontal line.
-    fn hline(&mut self, j: u32) {
-        if j <= self.height {
-            for i in 0..=self.width {
-                if i % 3 == 0 {
-                    self.canvas.set(i, self.height - j);
+    /// Draws horizontal line of the specified style.
+    fn hline(&mut self, j: u32, mode: LineStyle) {
+        match mode {
+            LineStyle::None => {}
+            LineStyle::Solid => {
+                if j <= self.height {
+                    for i in 0..=self.width {
+                        self.canvas.set(i, self.height - j);
+                    }
+                }
+            }
+            LineStyle::Dotted => {
+                if j <= self.height {
+                    for i in 0..=self.width {
+                        if i % 3 == 0 {
+                            self.canvas.set(i, self.height - j);
+                        }
+                    }
+                }
+            }
+            LineStyle::Dashed => {
+                if j <= self.height {
+                    for i in 0..=self.width {
+                        if i % 4 == 0 {
+                            self.canvas.set(i, self.height - j);
+                            self.canvas.set(i + 1, self.height - j);
+                        }
+                    }
                 }
             }
         }
-    }
-
-    pub fn to_string(&mut self) -> String {
-        self.figures();
-        self.axis();
-
-        // get frame and replace space with U+2800 (BRAILLE PATTERN BLANK)
-        let mut frame = self.canvas.frame().replace(' ', "\u{2800}");
-
-        if let Some(idx) = frame.find('\n') {
-            frame.insert_str(idx, &format!(" {0:.1}", self.ymax));
-            frame.push_str(&format!(
-                " {0:.1}\n{1: <width$.1}{2:.1}\n",
-                self.ymin,
-                self.xmin,
-                self.xmax,
-                width = (self.width as usize) / 2 - 3
-            ));
-        }
-        frame
     }
 
     /// Prints canvas content.
     pub fn display(&mut self) {
-        println!("{}", self.to_string());
+        self.figures();
+        self.axis();
+
+        println!("{}", self);
     }
 
     /// Prints canvas content with some additional visual elements (like borders).
@@ -249,20 +328,31 @@ impl<'a> Chart<'a> {
         self.display();
     }
 
-    /// Show axis.
+    /// Shows axis.
     pub fn axis(&mut self) {
-        let x_scale = Scale::new(self.xmin..self.xmax, 0.0..self.width as f32);
+        self.x_axis();
+        self.y_axis();
+    }
+
+    /// Shows x-axis.
+    pub fn x_axis(&mut self) {
         let y_scale = Scale::new(self.ymin..self.ymax, 0.0..self.height as f32);
 
-        if self.xmin <= 0.0 && self.xmax >= 0.0 {
-            self.vline(x_scale.linear(0.0) as u32);
-        }
         if self.ymin <= 0.0 && self.ymax >= 0.0 {
-            self.hline(y_scale.linear(0.0) as u32);
+            self.hline(y_scale.linear(0.0) as u32, self.x_style);
         }
     }
 
-    // Show figures.
+    /// Shows y-axis.
+    pub fn y_axis(&mut self) {
+        let x_scale = Scale::new(self.xmin..self.xmax, 0.0..self.width as f32);
+
+        if self.xmin <= 0.0 && self.xmax >= 0.0 {
+            self.vline(x_scale.linear(0.0) as u32, self.y_style);
+        }
+    }
+
+    // Shows figures.
     pub fn figures(&mut self) {
         for (shape, color) in &self.shapes {
             let x_scale = Scale::new(self.xmin..self.xmax, 0.0..self.width as f32);
@@ -358,7 +448,7 @@ impl<'a> Chart<'a> {
         }
     }
 
-    /// Return the frame.
+    /// Returns the frame.
     pub fn frame(&self) -> String {
         self.canvas.frame()
     }
@@ -430,5 +520,17 @@ fn rgb_to_pixelcolor(rgb: &RGB8) -> PixelColor {
         r: rgb.r,
         g: rgb.g,
         b: rgb.b,
+    }
+}
+
+impl<'a> AxisBuilder<'a> for Chart<'a> {
+    fn x_style(&'a mut self, style: LineStyle) -> &'a mut Chart {
+        self.x_style = style;
+        self
+    }
+
+    fn y_style(&'a mut self, style: LineStyle) -> &'a mut Chart {
+        self.y_style = style;
+        self
     }
 }
