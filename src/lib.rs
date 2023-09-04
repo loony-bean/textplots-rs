@@ -91,9 +91,9 @@ pub struct Chart<'a> {
     /// Underlying canvas object.
     canvas: BrailleCanvas,
     /// x-axis style
-    x_style: AxisStyle,
-    /// x-axis style
-    y_style: AxisStyle,
+    x_style: LineStyle,
+    /// y-axis style
+    y_style: LineStyle,
 }
 
 /// Specifies different kinds of plotted data.
@@ -125,10 +125,10 @@ pub trait ColorPlot<'a> {
 /// Provides a builder interface for styling axis.
 pub trait AxisBuilder<'a> {
     /// Specifies the style of x-axis.
-    fn x_style(&'a mut self, style: AxisStyle) -> &'a mut Chart<'a>;
+    fn x_style(&'a mut self, style: LineStyle) -> &'a mut Chart<'a>;
 
-    /// Specifies the style of x-axis.
-    fn y_style(&'a mut self, style: AxisStyle) -> &'a mut Chart<'a>;
+    /// Specifies the style of y-axis.
+    fn y_style(&'a mut self, style: LineStyle) -> &'a mut Chart<'a>;
 }
 
 impl<'a> Default for Chart<'a> {
@@ -137,22 +137,24 @@ impl<'a> Default for Chart<'a> {
     }
 }
 
-/// Specifies axis styles.
-/// Default value is `AxisStyle::Dotted`.
+/// Specifies line style.
+/// Default value is `LineStyle::Dotted`.
 #[derive(Clone, Copy)]
-pub enum AxisStyle {
-    /// Axis lines are not displayed.
+pub enum LineStyle {
+    /// Line is not displayed.
     None,
-    /// Axis lines are solid.
+    /// Line is solid  (⠤⠤⠤).
     Solid,
-    /// Axis lines are dotted.
+    /// Line is dotted (⠄⠠⠀).
     Dotted,
-    /// Axis lines are dashed.
+    /// Line is dashed (⠤⠀⠤).
     Dashed,
 }
 
 impl<'a> Display for Chart<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+
+        // get frame and replace space with U+2800 (BRAILLE PATTERN BLANK)
         let mut frame = self.canvas.frame().replace(' ', "\u{2800}");
 
         if let Some(idx) = frame.find('\n') {
@@ -194,8 +196,8 @@ impl<'a> Chart<'a> {
             height,
             shapes: Vec::new(),
             canvas: BrailleCanvas::new(width, height),
-            x_style: AxisStyle::Dotted,
-            y_style: AxisStyle::Dotted,
+            x_style: LineStyle::Dotted,
+            y_style: LineStyle::Dotted,
         }
     }
 
@@ -230,8 +232,8 @@ impl<'a> Chart<'a> {
             height,
             shapes: Vec::new(),
             canvas: BrailleCanvas::new(width, height),
-            x_style: AxisStyle::Dotted,
-            y_style: AxisStyle::Dotted,
+            x_style: LineStyle::Dotted,
+            y_style: LineStyle::Dotted,
         }
     }
 
@@ -240,24 +242,24 @@ impl<'a> Chart<'a> {
         let w = self.width;
         let h = self.height;
 
-        self.vline(0, AxisStyle::Dotted);
-        self.vline(w, AxisStyle::Dotted);
-        self.hline(0, AxisStyle::Dotted);
-        self.hline(h, AxisStyle::Dotted);
+        self.vline(0, LineStyle::Dotted);
+        self.vline(w, LineStyle::Dotted);
+        self.hline(0, LineStyle::Dotted);
+        self.hline(h, LineStyle::Dotted);
     }
 
     /// Draws vertical line of the specified style.
-    fn vline(&mut self, i: u32, mode: AxisStyle) {
+    fn vline(&mut self, i: u32, mode: LineStyle) {
         match mode {
-            AxisStyle::None => {}
-            AxisStyle::Solid => {
+            LineStyle::None => {}
+            LineStyle::Solid => {
                 if i <= self.width {
                     for j in 0..=self.height {
                         self.canvas.set(i, j);
                     }
                 }
             }
-            AxisStyle::Dotted => {
+            LineStyle::Dotted => {
                 if i <= self.width {
                     for j in 0..=self.height {
                         if j % 3 == 0 {
@@ -266,7 +268,7 @@ impl<'a> Chart<'a> {
                     }
                 }
             }
-            AxisStyle::Dashed => {
+            LineStyle::Dashed => {
                 if i <= self.width {
                     for j in 0..=self.height {
                         if j % 4 == 0 {
@@ -280,17 +282,17 @@ impl<'a> Chart<'a> {
     }
 
     /// Draws horizontal line of the specified style.
-    fn hline(&mut self, j: u32, mode: AxisStyle) {
+    fn hline(&mut self, j: u32, mode: LineStyle) {
         match mode {
-            AxisStyle::None => {}
-            AxisStyle::Solid => {
+            LineStyle::None => {}
+            LineStyle::Solid => {
                 if j <= self.height {
                     for i in 0..=self.width {
                         self.canvas.set(i, self.height - j);
                     }
                 }
             }
-            AxisStyle::Dotted => {
+            LineStyle::Dotted => {
                 if j <= self.height {
                     for i in 0..=self.width {
                         if i % 3 == 0 {
@@ -299,7 +301,7 @@ impl<'a> Chart<'a> {
                     }
                 }
             }
-            AxisStyle::Dashed => {
+            LineStyle::Dashed => {
                 if j <= self.height {
                     for i in 0..=self.width {
                         if i % 4 == 0 {
@@ -522,12 +524,12 @@ fn rgb_to_pixelcolor(rgb: &RGB8) -> PixelColor {
 }
 
 impl<'a> AxisBuilder<'a> for Chart<'a> {
-    fn x_style(&'a mut self, style: AxisStyle) -> &'a mut Chart {
+    fn x_style(&'a mut self, style: LineStyle) -> &'a mut Chart {
         self.x_style = style;
         self
     }
 
-    fn y_style(&'a mut self, style: AxisStyle) -> &'a mut Chart {
+    fn y_style(&'a mut self, style: LineStyle) -> &'a mut Chart {
         self.y_style = style;
         self
     }
