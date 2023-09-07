@@ -153,7 +153,6 @@ pub enum LineStyle {
 
 impl<'a> Display for Chart<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-
         // get frame and replace space with U+2800 (BRAILLE PATTERN BLANK)
         let mut frame = self.canvas.frame().replace(' ', "\u{2800}");
 
@@ -176,14 +175,14 @@ impl<'a> Chart<'a> {
     ///
     /// # Panics
     ///
-    /// Panics if `width` or `height` is less than 32.
+    /// Panics if `width` or `height` are 0.
     pub fn new(width: u32, height: u32, xmin: f32, xmax: f32) -> Self {
-        if width < 32 {
-            panic!("width should be more then 32, {} is provided", width);
+        if width == 0 {
+            panic!("width should be positive");
         }
 
-        if height < 32 {
-            panic!("height should be more then 32, {} is provided", height);
+        if height == 0 {
+            panic!("height should be positive");
         }
 
         Self {
@@ -205,7 +204,7 @@ impl<'a> Chart<'a> {
     ///
     /// # Panics
     ///
-    /// Panics if `width` or `height` is less than 32.
+    /// Panics if `width` or `height` are 0.
     pub fn new_with_y_range(
         width: u32,
         height: u32,
@@ -214,12 +213,12 @@ impl<'a> Chart<'a> {
         ymin: f32,
         ymax: f32,
     ) -> Self {
-        if width < 32 {
-            panic!("width should be more then 32, {} is provided", width);
+        if width == 0 {
+            panic!("width should be positive");
         }
 
-        if height < 32 {
-            panic!("height should be more then 32, {} is provided", height);
+        if height == 0 {
+            panic!("height should be positive");
         }
 
         Self {
@@ -316,8 +315,8 @@ impl<'a> Chart<'a> {
 
     /// Prints canvas content.
     pub fn display(&mut self) {
-        self.figures();
         self.axis();
+        self.figures();
 
         println!("{}", self);
     }
