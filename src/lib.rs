@@ -94,6 +94,10 @@ pub struct Chart<'a> {
     x_style: LineStyle,
     /// y-axis style
     y_style: LineStyle,
+    /// Function to apply to X-axis ticks (e.g. for adding units or formatting as date)
+    x_formatter: Option<Box<dyn Fn(f32) -> String>>,
+    /// Function to apply to Y-axis ticks (e.g. for adding units)
+    y_formatter: Option<Box<dyn Fn(f32) -> String>>,
 }
 
 /// Specifies different kinds of plotted data.
@@ -157,13 +161,19 @@ impl<'a> Display for Chart<'a> {
         let mut frame = self.canvas.frame().replace(' ', "\u{2800}");
 
         if let Some(idx) = frame.find('\n') {
-            frame.insert_str(idx, &format!(" {0:.1}", self.ymax));
+            // frame.insert_str(idx, &format!(" {0:.1}", self.ymax));
+
+            let xmin = self.format_x_axis_tick(self.xmin);
+            let xmax = self.format_x_axis_tick(self.xmax);
+
+            frame.insert_str(idx, &format!(" {0}", self.format_y_axis_tick(self.ymax)));
+
             frame.push_str(&format!(
-                " {0:.1}\n{1: <width$.1}{2:.1}\n",
-                self.ymin,
-                self.xmin,
-                self.xmax,
-                width = (self.width as usize) / 2 - 3
+                " {0}\n{1: <width$}{2}\n",
+                self.format_y_axis_tick(self.ymin),
+                xmin,
+                xmax,
+                width = (self.width as usize) / 2 - xmax.len()
             ));
         }
         write!(f, "{}", frame)
@@ -197,6 +207,8 @@ impl<'a> Chart<'a> {
             canvas: BrailleCanvas::new(width, height),
             x_style: LineStyle::Dotted,
             y_style: LineStyle::Dotted,
+            x_formatter: None,
+            y_formatter: None,
         }
     }
 
@@ -233,6 +245,8 @@ impl<'a> Chart<'a> {
             canvas: BrailleCanvas::new(width, height),
             x_style: LineStyle::Dotted,
             y_style: LineStyle::Dotted,
+            x_formatter: None,
+            y_formatter: None,
         }
     }
 
@@ -349,6 +363,36 @@ impl<'a> Chart<'a> {
         if self.xmin <= 0.0 && self.xmax >= 0.0 {
             self.vline(x_scale.linear(0.0) as u32, self.y_style);
         }
+    }
+
+    /// Performs formatting of the x axis.
+    fn format_x_axis_tick(&self, value: f32) -> String {
+        if let Some(ref f) = self.x_formatter {
+            f(value)
+        } else {
+            format!("{:.1}", value)
+        }
+    }
+
+    /// Performs formatting of the y axis.
+    fn format_y_axis_tick(&self, value: f32) -> String {
+        if let Some(ref f) = self.y_formatter {
+            f(value)
+        } else {
+            format!("{:.1}", value)
+        }
+    }
+
+    /// Specifies a formater for the x axis.
+    pub fn x_label_format<F: 'static + Fn(f32) -> String>(&mut self, f: F) -> &mut Self {
+        self.x_formatter = Some(Box::new(f));
+        self
+    }
+
+    /// Specifies a formater for the y axis.
+    pub fn y_label_format<F: 'static + Fn(f32) -> String>(&mut self, f: F) -> &mut Self {
+        self.y_formatter = Some(Box::new(f));
+        self
     }
 
     // Shows figures.
