@@ -94,9 +94,9 @@ pub struct Chart<'a> {
     x_style: LineStyle,
     /// Y-axis style.
     y_style: LineStyle,
-    /// X-axis label format
+    /// X-axis label format.
     x_label_format: LabelFormat,
-    /// Y-axis label format
+    /// Y-axis label format.
     y_label_format: LabelFormat,
 }
 
@@ -202,7 +202,7 @@ impl<'a> Chart<'a> {
     ///
     /// # Panics
     ///
-    /// Panics if `width` or `height` are 0.
+    /// Panics if `width` is less than 32 or `height` is less than 3.
     pub fn new(width: u32, height: u32, xmin: f32, xmax: f32) -> Self {
         if width < 32 {
             panic!("width should be at least 32");
@@ -233,7 +233,7 @@ impl<'a> Chart<'a> {
     ///
     /// # Panics
     ///
-    /// Panics if `width` or `height` are 0.
+    /// Panics if `width` is less than 32 or `height` is less than 3.
     pub fn new_with_y_range(
         width: u32,
         height: u32,
