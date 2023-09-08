@@ -1,6 +1,6 @@
 use std::process::exit;
 use structopt::StructOpt;
-use textplots::{Chart, Plot, Shape, AxisBuilder};
+use textplots::{Chart, Plot, Shape, LabelBuilder};
 
 #[derive(StructOpt)]
 struct Opt {
