@@ -387,9 +387,7 @@ impl<'a> Chart<'a> {
         match &self.x_label_format {
             LabelFormat::None => "".to_owned(),
             LabelFormat::Value => format!("{:.1}", value),
-            LabelFormat::Custom(f) => {
-                f(value)
-            },
+            LabelFormat::Custom(f) => f(value),
         }
     }
 
@@ -398,9 +396,7 @@ impl<'a> Chart<'a> {
         match &self.y_label_format {
             LabelFormat::None => "".to_owned(),
             LabelFormat::Value => format!("{:.1}", value),
-            LabelFormat::Custom(f) => {
-                f(value)
-            },
+            LabelFormat::Custom(f) => f(value),
         }
     }
 

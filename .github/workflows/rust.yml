@@ -25,12 +25,17 @@ jobs:
         components: clippy
     - name: Checkout Sources
       uses: actions/checkout@v2
+    - name: Check formatting
+      uses: actions-rs/cargo@v1
+      with:
+        command: fmt
+        args: -- --check
+    - name: Lints
+      uses: actions-rs/cargo@v1
+      with:
+        command: clippy
+        args: -- -D warnings
     - name: Build & Test Project
       run: |
         ./run_examples.sh
         cargo test
-    - name: clippy
-      uses: actions-rs/clippy-check@v1
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        name: textplots-rs clippy
