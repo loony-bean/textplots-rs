@@ -90,10 +90,14 @@ pub struct Chart<'a> {
     shapes: Vec<(&'a Shape<'a>, Option<RGB8>)>,
     /// Underlying canvas object.
     canvas: BrailleCanvas,
-    /// x-axis style
+    /// X-axis style.
     x_style: LineStyle,
-    /// y-axis style
+    /// Y-axis style.
     y_style: LineStyle,
+    /// X-axis label format.
+    x_label_format: LabelFormat,
+    /// Y-axis label format.
+    y_label_format: LabelFormat,
 }
 
 /// Specifies different kinds of plotted data.
@@ -125,10 +129,18 @@ pub trait ColorPlot<'a> {
 /// Provides a builder interface for styling axis.
 pub trait AxisBuilder<'a> {
     /// Specifies the style of x-axis.
-    fn x_style(&'a mut self, style: LineStyle) -> &'a mut Chart<'a>;
+    fn x_axis_style(&'a mut self, style: LineStyle) -> &'a mut Chart<'a>;
 
     /// Specifies the style of y-axis.
-    fn y_style(&'a mut self, style: LineStyle) -> &'a mut Chart<'a>;
+    fn y_axis_style(&'a mut self, style: LineStyle) -> &'a mut Chart<'a>;
+}
+
+pub trait LabelBuilder<'a> {
+    /// Specifies the label format of x-axis.
+    fn x_label_format(&'a mut self, format: LabelFormat) -> &'a mut Chart<'a>;
+
+    /// Specifies the label format of y-axis.
+    fn y_label_format(&'a mut self, format: LabelFormat) -> &'a mut Chart<'a>;
 }
 
 impl<'a> Default for Chart<'a> {
@@ -151,20 +163,34 @@ pub enum LineStyle {
     Dashed,
 }
 
+/// Specifies label format.
+/// Default value is `LabelFormat::Value`.
+pub enum LabelFormat {
+    /// Label is not displayed.
+    None,
+    /// Label is shown as a value.
+    Value,
+    /// Label is shown as a custom string.
+    Custom(Box<dyn Fn(f32) -> String>),
+}
+
 impl<'a> Display for Chart<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-
         // get frame and replace space with U+2800 (BRAILLE PATTERN BLANK)
         let mut frame = self.canvas.frame().replace(' ', "\u{2800}");
 
         if let Some(idx) = frame.find('\n') {
-            frame.insert_str(idx, &format!(" {0:.1}", self.ymax));
+            let xmin = self.format_x_axis_tick(self.xmin);
+            let xmax = self.format_x_axis_tick(self.xmax);
+
+            frame.insert_str(idx, &format!(" {0}", self.format_y_axis_tick(self.ymax)));
+
             frame.push_str(&format!(
-                " {0:.1}\n{1: <width$.1}{2:.1}\n",
-                self.ymin,
-                self.xmin,
-                self.xmax,
-                width = (self.width as usize) / 2 - 3
+                " {0}\n{1: <width$}{2}\n",
+                self.format_y_axis_tick(self.ymin),
+                xmin,
+                xmax,
+                width = (self.width as usize) / 2 - xmax.len()
             ));
         }
         write!(f, "{}", frame)
@@ -176,14 +202,14 @@ impl<'a> Chart<'a> {
     ///
     /// # Panics
     ///
-    /// Panics if `width` or `height` is less than 32.
+    /// Panics if `width` is less than 32 or `height` is less than 3.
     pub fn new(width: u32, height: u32, xmin: f32, xmax: f32) -> Self {
         if width < 32 {
-            panic!("width should be more then 32, {} is provided", width);
+            panic!("width should be at least 32");
         }
 
-        if height < 32 {
-            panic!("height should be more then 32, {} is provided", height);
+        if height < 3 {
+            panic!("height should be at least 3");
         }
 
         Self {
@@ -198,6 +224,8 @@ impl<'a> Chart<'a> {
             canvas: BrailleCanvas::new(width, height),
             x_style: LineStyle::Dotted,
             y_style: LineStyle::Dotted,
+            x_label_format: LabelFormat::Value,
+            y_label_format: LabelFormat::Value,
         }
     }
 
@@ -205,7 +233,7 @@ impl<'a> Chart<'a> {
     ///
     /// # Panics
     ///
-    /// Panics if `width` or `height` is less than 32.
+    /// Panics if `width` is less than 32 or `height` is less than 3.
     pub fn new_with_y_range(
         width: u32,
         height: u32,
@@ -215,11 +243,11 @@ impl<'a> Chart<'a> {
         ymax: f32,
     ) -> Self {
         if width < 32 {
-            panic!("width should be more then 32, {} is provided", width);
+            panic!("width should be at least 32");
         }
 
-        if height < 32 {
-            panic!("height should be more then 32, {} is provided", height);
+        if height < 3 {
+            panic!("height should be at least 3");
         }
 
         Self {
@@ -234,6 +262,8 @@ impl<'a> Chart<'a> {
             canvas: BrailleCanvas::new(width, height),
             x_style: LineStyle::Dotted,
             y_style: LineStyle::Dotted,
+            x_label_format: LabelFormat::Value,
+            y_label_format: LabelFormat::Value,
         }
     }
 
@@ -316,8 +346,8 @@ impl<'a> Chart<'a> {
 
     /// Prints canvas content.
     pub fn display(&mut self) {
-        self.figures();
         self.axis();
+        self.figures();
 
         println!("{}", self);
     }
@@ -349,6 +379,28 @@ impl<'a> Chart<'a> {
 
         if self.xmin <= 0.0 && self.xmax >= 0.0 {
             self.vline(x_scale.linear(0.0) as u32, self.y_style);
+        }
+    }
+
+    /// Performs formatting of the x axis.
+    fn format_x_axis_tick(&self, value: f32) -> String {
+        match &self.x_label_format {
+            LabelFormat::None => "".to_owned(),
+            LabelFormat::Value => format!("{:.1}", value),
+            LabelFormat::Custom(f) => {
+                f(value)
+            },
+        }
+    }
+
+    /// Performs formatting of the y axis.
+    fn format_y_axis_tick(&self, value: f32) -> String {
+        match &self.y_label_format {
+            LabelFormat::None => "".to_owned(),
+            LabelFormat::Value => format!("{:.1}", value),
+            LabelFormat::Custom(f) => {
+                f(value)
+            },
         }
     }
 
@@ -524,13 +576,27 @@ fn rgb_to_pixelcolor(rgb: &RGB8) -> PixelColor {
 }
 
 impl<'a> AxisBuilder<'a> for Chart<'a> {
-    fn x_style(&'a mut self, style: LineStyle) -> &'a mut Chart {
+    fn x_axis_style(&'a mut self, style: LineStyle) -> &'a mut Chart {
         self.x_style = style;
         self
     }
 
-    fn y_style(&'a mut self, style: LineStyle) -> &'a mut Chart {
+    fn y_axis_style(&'a mut self, style: LineStyle) -> &'a mut Chart {
         self.y_style = style;
+        self
+    }
+}
+
+impl<'a> LabelBuilder<'a> for Chart<'a> {
+    /// Specifies a formater for the x-axis label.
+    fn x_label_format(&mut self, format: LabelFormat) -> &mut Self {
+        self.x_label_format = format;
+        self
+    }
+
+    /// Specifies a formater for the y-axis label.
+    fn y_label_format(&mut self, format: LabelFormat) -> &mut Self {
+        self.y_label_format = format;
         self
     }
 }
