@@ -17,14 +17,21 @@ path = "src/lib.rs"
 [[bin]]
 name = "textplots"
 path = "src/main.rs"
+required-features = ["tool"]
 
 [badges]
 travis-ci = { repository = "loony-bean/textplots-rs", branch = "master" }
 
+[features]
+tool = [
+    "meval",
+    "structopt",
+]
+
 [dependencies]
 drawille = "0.3.0"
-structopt = "0.3"
-meval = "0.2"
+structopt = { version = "0.3", optional = true }
+meval = { version = "0.2", optional = true }
 rgb = "0.8.27"
 
 [dev-dependencies]

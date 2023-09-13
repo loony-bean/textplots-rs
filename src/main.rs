@@ -67,4 +67,5 @@ fn main() {
     chart
         .lineplot(&Shape::Continuous(Box::new(|x| func(x.into()) as f32)))
         .display();
+
 }
