@@ -60,5 +60,4 @@ fn main() {
     let chart_string = chart.to_string();
 
     println!("{}", chart_string);
-
 }
