@@ -1,5 +1,5 @@
-use chrono::{NaiveDate, Duration};
-use textplots::{Chart, Shape, LabelBuilder, LabelFormat, ColorPlot};
+use chrono::{Duration, NaiveDate};
+use textplots::{Chart, ColorPlot, LabelBuilder, LabelFormat, Shape};
 
 fn main() {
     // Specify how labels are displayed.
@@ -9,9 +9,19 @@ fn main() {
 
     println!("My step count over 3 months: ");
     Chart::new_with_y_range(200, 50, 0.0, (end - start).num_days() as f32, 0.0, 25_000.0)
-        .linecolorplot(&Shape::Continuous(Box::new(|x| 1000.0 * (5.0 * (0.5 * x).sin() + 0.05 * x) + 9000.0)), rgb::RGB { r: 10, g: 100, b: 200 })
-        .x_label_format(LabelFormat::Custom(Box::new(move |val| {format!("{}", start + Duration::days(val as i64))})))
+        .linecolorplot(
+            &Shape::Continuous(Box::new(|x| {
+                1000.0 * (5.0 * (0.5 * x).sin() + 0.05 * x) + 9000.0
+            })),
+            rgb::RGB {
+                r: 10,
+                g: 100,
+                b: 200,
+            },
+        )
+        .x_label_format(LabelFormat::Custom(Box::new(move |val| {
+            format!("{}", start + Duration::days(val as i64))
+        })))
         .y_label_format(LabelFormat::Value)
         .display();
-
 }
