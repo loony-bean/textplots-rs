@@ -50,9 +50,14 @@ fn main() {
 
     // You can instead get the raw string value
     println!("\nRender to string (and then print that string)");
-    let chart = Chart::default()
-        .lineplot(&Shape::Continuous(Box::new(|x| x.atan())))
-        .to_string();
+    let mut chart = Chart::default();
+    let binding = Shape::Continuous(Box::new(|x| x.atan()));
+    let chart = chart.lineplot(&binding);
 
-    println!("{}", chart);
+    chart.axis();
+    chart.figures();
+
+    let chart_string = chart.to_string();
+
+    println!("{}", chart_string);
 }

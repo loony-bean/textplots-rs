@@ -46,11 +46,11 @@ textplots '10*x + x^2 + 10*sin(x)*abs(x)' --xmin=-20 --xmax=20
 ## Library
 
 ```sh
-$ cargo build
+cargo build
 ```
 
 ## Binary
 
 ```sh
-$ cargo build --bin --release textplots --features="tool"
+cargo build --bin --release textplots --features="tool"
 ```
