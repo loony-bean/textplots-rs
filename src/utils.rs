@@ -10,6 +10,11 @@
 /// # use textplots::utils::histogram;
 /// assert_eq!(vec![(0.0, 1.0), (5.0, 1.0)], histogram( &[ (0.0, 0.0), (9.0, 9.0), (10.0, 10.0) ], 0.0, 10.0, 2 ));
 /// ```
+
+use alloc::vec::Vec;
+use alloc::vec;
+
+
 pub fn histogram(data: &[(f32, f32)], min: f32, max: f32, bins: usize) -> Vec<(f32, f32)> {
     let mut output = vec![0; bins];
 

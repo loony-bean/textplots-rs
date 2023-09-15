@@ -1,6 +1,6 @@
 //! Transformations between domain and range.
 
-use std::ops::Range;
+use core::ops::Range;
 
 /// Holds mapping between domain and range of the function.
 pub struct Scale {

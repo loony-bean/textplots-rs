@@ -23,10 +23,13 @@ required-features = ["tool"]
 travis-ci = { repository = "loony-bean/textplots-rs", branch = "master" }
 
 [features]
+default = ["std"]
 tool = [
     "meval",
     "structopt",
 ]
+std = []
+alloc = []
 
 [dependencies]
 drawille = "0.3.0"
