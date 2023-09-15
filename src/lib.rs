@@ -57,18 +57,18 @@ extern crate alloc;
 pub mod scale;
 pub mod utils;
 
+use alloc::borrow::ToOwned;
+use alloc::boxed::Box;
+use alloc::vec::Vec;
+use alloc::{format, string::String};
+use core::cmp;
+use core::default::Default;
+use core::f32;
+use core::fmt::{Display, Formatter, Result};
 use drawille::Canvas as BrailleCanvas;
 use drawille::PixelColor;
 use rgb::RGB8;
 use scale::Scale;
-use core::cmp;
-use core::f32;
-use core::default::Default;
-use core::fmt::{Display, Formatter, Result};
-use alloc::vec::Vec;
-use alloc::{format, string::String};
-use alloc::boxed::Box;
-use alloc::borrow::ToOwned;
 
 /// How the chart will do the ranging on axes
 #[derive(PartialEq)]
