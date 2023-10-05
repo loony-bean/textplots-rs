@@ -38,6 +38,7 @@ std = [
 [dependencies]
 # THESE CRATES ARE ENABLED BY DEFAULT
 drawille-nostd = "0.1.2"
+num-traits = { version = "0.2.16", default-features = false, features = ["libm"] }
 # THESE CRATES ARE ENABLED ONLY BY THE CORRESPONDING FEATURES
 drawille = { version = "0.3.0" , optional = true}
 structopt = { version = "0.3", optional = true }

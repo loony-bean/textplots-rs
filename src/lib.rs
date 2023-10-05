@@ -49,19 +49,36 @@
 //!
 //! <img src="https://github.com/loony-bean/textplots-rs/blob/master/doc/demo3.png?raw=true"/>
 
+// If std feature isn't enabled, don't load standard library
+#![cfg_attr(not(feature = "std"), no_std)]
+
 pub mod scale;
 pub mod utils;
 
-use drawille::Canvas as BrailleCanvas;
-use drawille::PixelColor;
-use rgb::RGB8;
+// These imports are mutual for std and no_std
+extern crate alloc;
+
+use alloc::borrow::ToOwned;
+use alloc::boxed::Box;
+use alloc::format;
+use alloc::string::String;
+use alloc::vec::Vec;
+use core::cmp;
+use core::default::Default;
+use core::f32;
+use core::fmt::{Display, Formatter};
+#[allow(unused_imports, clippy::single_component_path_imports)]
+use drawille_nostd;
 use scale::Scale;
+#[allow(unused_imports)]
+use num_traits::real::Real;
 
-use std::cmp;
-use std::default::Default;
-use std::f32;
+// These imports are for std-version only
+#[cfg(feature = "std")]
+use drawille::PixelColor;
+#[cfg(feature = "std")]
+use rgb::RGB8;
 
-use std::fmt::{Display, Formatter, Result};
 
 /// How the chart will do the ranging on axes
 #[derive(PartialEq)]
@@ -71,6 +88,18 @@ enum ChartRangeMethod {
     /// Has a fixed range between the given min & max
     FixedRange,
 }
+
+#[cfg(not(feature = "std"))]
+type BrailleCanvas = drawille_nostd::Canvas;
+
+#[cfg(not(feature = "std"))]
+type Shapes<'a> = Vec<&'a Shape<'a>>;
+
+#[cfg(feature = "std")]
+type BrailleCanvas = drawille::Canvas;
+
+#[cfg(feature = "std")]
+type Shapes<'a> = Vec<(&'a Shape<'a>, Option<RGB8>)>;
 
 /// Controls the drawing.
 pub struct Chart<'a> {
@@ -89,7 +118,7 @@ pub struct Chart<'a> {
     /// The type of y axis ranging we'll do
     y_ranging: ChartRangeMethod,
     /// Collection of shapes to be presented on the canvas.
-    shapes: Vec<(&'a Shape<'a>, Option<RGB8>)>,
+    shapes: Shapes<'a>,
     /// Underlying canvas object.
     canvas: BrailleCanvas,
     /// X-axis style.
@@ -119,10 +148,15 @@ pub enum Shape<'a> {
 /// Provides an interface for drawing plots.
 pub trait Plot<'a> {
     /// Draws a [line chart](https://en.wikipedia.org/wiki/Line_chart) of points connected by straight line segments.
+    #[cfg(feature = "std")]
     fn lineplot(&'a mut self, shape: &'a Shape) -> &'a mut Chart;
+
+    #[cfg(not(feature = "std"))]
+    fn lineplot_nostd(&'a mut self, shape: &'a Shape) -> &'a mut Chart;
 }
 
 /// Provides an interface for drawing colored plots.
+#[cfg(feature = "std")]
 pub trait ColorPlot<'a> {
     /// Draws a [line chart](https://en.wikipedia.org/wiki/Line_chart) of points connected by straight line segments using the specified color
     fn linecolorplot(&'a mut self, shape: &'a Shape, color: RGB8) -> &'a mut Chart;
@@ -177,7 +211,7 @@ pub enum LabelFormat {
 }
 
 impl<'a> Display for Chart<'a> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), core::fmt::Error> {
         // get frame and replace space with U+2800 (BRAILLE PATTERN BLANK)
         let mut frame = self.canvas.frame().replace(' ', "\u{2800}");
 
@@ -270,7 +304,7 @@ impl<'a> Chart<'a> {
     }
 
     /// Displays bounding rect.
-    fn borders(&mut self) {
+    pub fn borders(&mut self) {
         let w = self.width;
         let h = self.height;
 
@@ -347,6 +381,7 @@ impl<'a> Chart<'a> {
     }
 
     /// Prints canvas content.
+    #[cfg(feature = "std")]
     pub fn display(&mut self) {
         self.axis();
         self.figures();
@@ -355,6 +390,7 @@ impl<'a> Chart<'a> {
     }
 
     /// Prints canvas content with some additional visual elements (like borders).
+    #[cfg(feature = "std")]
     pub fn nice(&mut self) {
         self.borders();
         self.display();
@@ -402,39 +438,46 @@ impl<'a> Chart<'a> {
         }
     }
 
+    fn translate(&self, shape: &Shape, x_scale: &Scale, y_scale: &Scale) -> Vec<(u32, u32)> {
+        // translate (x, y) points into screen coordinates
+        let points: Vec<_> = match shape {
+            Shape::Continuous(f) => (0..self.width)
+                .filter_map(|i| {
+                    let x = x_scale.inv_linear(i as f32);
+                    let y = f(x);
+                    if y.is_normal() {
+                        let j = y_scale.linear(y).round();
+                        Some((i, self.height - j as u32))
+                    } else {
+                        None
+                    }
+                })
+                .collect(),
+            Shape::Points(dt) | Shape::Lines(dt) | Shape::Steps(dt) | Shape::Bars(dt) => dt
+                .iter()
+                .filter_map(|(x, y)| {
+                    let i = x_scale.linear(*x).round() as u32;
+                    let j = y_scale.linear(*y).round() as u32;
+                    if i <= self.width && j <= self.height {
+                        Some((i, self.height - j))
+                    } else {
+                        None
+                    }
+                })
+                .collect(),
+        };
+        points
+    }
+
     // Shows figures.
+    #[cfg(feature = "std")]
     pub fn figures(&mut self) {
         for (shape, color) in &self.shapes {
             let x_scale = Scale::new(self.xmin..self.xmax, 0.0..self.width as f32);
             let y_scale = Scale::new(self.ymin..self.ymax, 0.0..self.height as f32);
 
             // translate (x, y) points into screen coordinates
-            let points: Vec<_> = match shape {
-                Shape::Continuous(f) => (0..self.width)
-                    .filter_map(|i| {
-                        let x = x_scale.inv_linear(i as f32);
-                        let y = f(x);
-                        if y.is_normal() {
-                            let j = y_scale.linear(y).round();
-                            Some((i, self.height - j as u32))
-                        } else {
-                            None
-                        }
-                    })
-                    .collect(),
-                Shape::Points(dt) | Shape::Lines(dt) | Shape::Steps(dt) | Shape::Bars(dt) => dt
-                    .iter()
-                    .filter_map(|(x, y)| {
-                        let i = x_scale.linear(*x).round() as u32;
-                        let j = y_scale.linear(*y).round() as u32;
-                        if i <= self.width && j <= self.height {
-                            Some((i, self.height - j))
-                        } else {
-                            None
-                        }
-                    })
-                    .collect(),
-            };
+            let points = self.translate(shape, &x_scale, &y_scale);
 
             // display segments
             match shape {
@@ -498,6 +541,51 @@ impl<'a> Chart<'a> {
         }
     }
 
+    #[cfg(not(feature = "std"))]
+    pub fn figures_nostd(&mut self) {
+        for shape in &self.shapes {
+            let x_scale = Scale::new(self.xmin..self.xmax, 0.0..self.width as f32);
+            let y_scale = Scale::new(self.ymin..self.ymax, 0.0..self.height as f32);
+
+            // translate (x, y) points into screen coordinates
+            let points = self.translate(shape, &x_scale, &y_scale);
+
+            // display segments
+            match shape {
+                Shape::Continuous(_) | Shape::Lines(_) => {
+                    for pair in points.windows(2) {
+                        let (x1, y1) = pair[0];
+                        let (x2, y2) = pair[1];
+                        self.canvas.line(x1, y1, x2, y2);
+                    }
+                }
+                Shape::Points(_) => {
+                    for (x, y) in points {
+                        self.canvas.set(x, y);
+                    }
+                }
+                Shape::Steps(_) => {
+                    for pair in points.windows(2) {
+                        let (x1, y1) = pair[0];
+                        let (x2, y2) = pair[1];
+                        self.canvas.line(x1, y2, x2, y2);
+                        self.canvas.line(x1, y1, x1, y2);
+                    }
+                }
+                Shape::Bars(_) => {
+                    for pair in points.windows(2) {
+                        let (x1, y1) = pair[0];
+                        let (x2, y2) = pair[1];
+                        self.canvas.line(x1, y2, x2, y2);
+                        self.canvas.line(x1, y1, x1, y2);
+                        self.canvas.line(x1, self.height, x1, y1);
+                        self.canvas.line(x2, self.height, x2, y2);
+                    }
+                }
+            }
+        }
+    }
+
     /// Returns the frame.
     pub fn frame(&self) -> String {
         self.canvas.frame()
@@ -545,6 +633,7 @@ impl<'a> Chart<'a> {
     }
 }
 
+#[cfg(feature = "std")]
 impl<'a> ColorPlot<'a> for Chart<'a> {
     fn linecolorplot(&'a mut self, shape: &'a Shape, color: RGB8) -> &'a mut Chart {
         self.shapes.push((shape, Some(color)));
@@ -556,6 +645,7 @@ impl<'a> ColorPlot<'a> for Chart<'a> {
 }
 
 impl<'a> Plot<'a> for Chart<'a> {
+    #[cfg(feature = "std")]
     fn lineplot(&'a mut self, shape: &'a Shape) -> &'a mut Chart {
         self.shapes.push((shape, None));
         if self.y_ranging == ChartRangeMethod::AutoRange {
@@ -563,8 +653,18 @@ impl<'a> Plot<'a> for Chart<'a> {
         }
         self
     }
+
+    #[cfg(not(feature = "std"))]
+    fn lineplot_nostd(&'a mut self, shape: &'a Shape) -> &'a mut Chart {
+        self.shapes.push(shape);
+        if self.y_ranging == ChartRangeMethod::AutoRange {
+            self.rescale(shape);
+        }
+        self
+    }
 }
 
+#[cfg(feature = "std")]
 fn rgb_to_pixelcolor(rgb: &RGB8) -> PixelColor {
     PixelColor::TrueColor {
         r: rgb.r,
