@@ -49,26 +49,19 @@
 //!
 //! <img src="https://github.com/loony-bean/textplots-rs/blob/master/doc/demo3.png?raw=true"/>
 
-// Marking lib.rs as no_std
-#![cfg_attr(not(feature = "std"), no_std)]
-
-extern crate alloc;
-
 pub mod scale;
 pub mod utils;
 
-use alloc::borrow::ToOwned;
-use alloc::boxed::Box;
-use alloc::vec::Vec;
-use alloc::{format, string::String};
-use core::cmp;
-use core::default::Default;
-use core::f32;
-use core::fmt::{Display, Formatter, Result};
 use drawille::Canvas as BrailleCanvas;
 use drawille::PixelColor;
 use rgb::RGB8;
 use scale::Scale;
+
+use std::cmp;
+use std::default::Default;
+use std::f32;
+
+use std::fmt::{Display, Formatter, Result};
 
 /// How the chart will do the ranging on axes
 #[derive(PartialEq)]
@@ -354,7 +347,6 @@ impl<'a> Chart<'a> {
     }
 
     /// Prints canvas content.
-    #[cfg(feature = "std")]
     pub fn display(&mut self) {
         self.axis();
         self.figures();
@@ -363,7 +355,6 @@ impl<'a> Chart<'a> {
     }
 
     /// Prints canvas content with some additional visual elements (like borders).
-    #[cfg(feature = "std")]
     pub fn nice(&mut self) {
         self.borders();
         self.display();

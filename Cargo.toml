@@ -24,21 +24,28 @@ travis-ci = { repository = "loony-bean/textplots-rs", branch = "master" }
 
 [features]
 default = ["std"]
+
 tool = [
     "meval",
     "structopt",
 ]
-std = []
-alloc = []
+
+std = [
+    "drawille",
+    "rgb"
+]
 
 [dependencies]
-drawille = "0.3.0"
+# THESE CRATES ARE ENABLED BY DEFAULT
+drawille-nostd = "0.1.2"
+# THESE CRATES ARE ENABLED ONLY BY THE CORRESPONDING FEATURES
+drawille = { version = "0.3.0" , optional = true}
 structopt = { version = "0.3", optional = true }
 meval = { version = "0.2", optional = true }
-rgb = "0.8.27"
+rgb = { version = "0.8.27", optional = true }
+
 
 [dev-dependencies]
 ctrlc = "3"
 console = "0.15.7"
 chrono = "0.4.30"
-
