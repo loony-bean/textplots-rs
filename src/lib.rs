@@ -151,6 +151,7 @@ pub trait Plot<'a> {
 }
 
 /// Provides an interface for drawing colored plots.
+/// Available with `std` feature.
 #[cfg(feature = "std")]
 pub trait ColorPlot<'a> {
     /// Draws a [line chart](https://en.wikipedia.org/wiki/Line_chart) of points connected by straight line segments using the specified color
@@ -376,6 +377,7 @@ impl<'a> Chart<'a> {
     }
 
     /// Prints canvas content.
+    /// Available with `std` feature.
     #[cfg(feature = "std")]
     pub fn display(&mut self) {
         self.axis();
@@ -385,6 +387,7 @@ impl<'a> Chart<'a> {
     }
 
     /// Prints canvas content with some additional visual elements (like borders).
+    /// Available with `std` feature.
     #[cfg(feature = "std")]
     pub fn nice(&mut self) {
         self.borders();
@@ -433,8 +436,8 @@ impl<'a> Chart<'a> {
         }
     }
 
+    /// Translates (x, y) points into screen coordinates
     fn translate(&self, shape: &Shape, x_scale: &Scale, y_scale: &Scale) -> Vec<(u32, u32)> {
-        // translate (x, y) points into screen coordinates
         let points: Vec<_> = match shape {
             Shape::Continuous(f) => (0..self.width)
                 .filter_map(|i| {
@@ -464,7 +467,8 @@ impl<'a> Chart<'a> {
         points
     }
 
-    // Shows figures.
+    // Shows colored figures.
+    // Available with `std` feature.
     #[cfg(feature = "std")]
     pub fn figures(&mut self) {
         for (shape, color) in &self.shapes {
@@ -536,6 +540,7 @@ impl<'a> Chart<'a> {
         }
     }
 
+    // Shows figures.
     #[cfg(not(feature = "std"))]
     pub fn figures(&mut self) {
         for shape in &self.shapes {
