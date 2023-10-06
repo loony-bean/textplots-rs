@@ -148,11 +148,8 @@ pub enum Shape<'a> {
 /// Provides an interface for drawing plots.
 pub trait Plot<'a> {
     /// Draws a [line chart](https://en.wikipedia.org/wiki/Line_chart) of points connected by straight line segments.
-    #[cfg(feature = "std")]
     fn lineplot(&'a mut self, shape: &'a Shape) -> &'a mut Chart;
 
-    #[cfg(not(feature = "std"))]
-    fn lineplot_nostd(&'a mut self, shape: &'a Shape) -> &'a mut Chart;
 }
 
 /// Provides an interface for drawing colored plots.
@@ -542,7 +539,7 @@ impl<'a> Chart<'a> {
     }
 
     #[cfg(not(feature = "std"))]
-    pub fn figures_nostd(&mut self) {
+    pub fn figures(&mut self) {
         for shape in &self.shapes {
             let x_scale = Scale::new(self.xmin..self.xmax, 0.0..self.width as f32);
             let y_scale = Scale::new(self.ymin..self.ymax, 0.0..self.height as f32);
@@ -655,7 +652,7 @@ impl<'a> Plot<'a> for Chart<'a> {
     }
 
     #[cfg(not(feature = "std"))]
-    fn lineplot_nostd(&'a mut self, shape: &'a Shape) -> &'a mut Chart {
+    fn lineplot(&'a mut self, shape: &'a Shape) -> &'a mut Chart {
         self.shapes.push(shape);
         if self.y_ranging == ChartRangeMethod::AutoRange {
             self.rescale(shape);
