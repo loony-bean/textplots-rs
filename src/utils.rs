@@ -2,7 +2,6 @@
 //!
 //! Merely a bunch of functions hanging around while the library API is taking shape.
 
-
 use alloc::vec;
 use alloc::vec::Vec;
 

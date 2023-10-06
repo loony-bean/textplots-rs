@@ -69,16 +69,15 @@ use core::f32;
 use core::fmt::{Display, Formatter};
 #[allow(unused_imports, clippy::single_component_path_imports)]
 use drawille_nostd;
-use scale::Scale;
 #[allow(unused_imports)]
 use num_traits::real::Real;
+use scale::Scale;
 
 // These imports are for std-version only
 #[cfg(feature = "std")]
 use drawille::PixelColor;
 #[cfg(feature = "std")]
 use rgb::RGB8;
-
 
 /// How the chart will do the ranging on axes
 #[derive(PartialEq)]
@@ -149,7 +148,6 @@ pub enum Shape<'a> {
 pub trait Plot<'a> {
     /// Draws a [line chart](https://en.wikipedia.org/wiki/Line_chart) of points connected by straight line segments.
     fn lineplot(&'a mut self, shape: &'a Shape) -> &'a mut Chart;
-
 }
 
 /// Provides an interface for drawing colored plots.
