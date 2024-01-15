@@ -98,6 +98,8 @@ pub struct Chart<'a> {
     x_label_format: LabelFormat,
     /// Y-axis label format.
     y_label_format: LabelFormat,
+    /// Y-axis tick label density
+    y_axis_tick_labels: YAxisTickLabels,
 }
 
 /// Specifies different kinds of plotted data.
@@ -143,6 +145,15 @@ pub trait LabelBuilder<'a> {
     fn y_label_format(&'a mut self, format: LabelFormat) -> &'a mut Chart<'a>;
 }
 
+/// Provides an interface for adding tick labels to the y-axis
+pub trait TickLabelBuilder<'a> {
+    // Horizontal labels don't allow for support of x-axis tick labels
+    /// Specifies the tick label density of y-axis.
+    /// YAxisTickLabels::Sparse will change the canvas height to the nearest multiple of 16
+    /// YAxisTickLabels::Dense will change the canvas height to the nearest multiple of 8
+    fn y_tick_labels(&'a mut self, density: YAxisTickLabels) -> &'a mut Chart<'a>;
+}
+
 impl<'a> Default for Chart<'a> {
     fn default() -> Self {
         Self::new(120, 60, -10.0, 10.0)
@@ -174,6 +185,26 @@ pub enum LabelFormat {
     Custom(Box<dyn Fn(f32) -> String>),
 }
 
+/// Specifies density of labels on the Y axis between ymin and ymax.
+/// Default value is `YAxisTickFormat::None`.
+pub enum YAxisTickLabels {
+    /// Tick labels are not displayed.
+    None,
+    /// Tick labels are sparsely shown (every 4th row)
+    Sparse,
+    /// Tick labels are densely shown (every 2nd row)
+    Dense,
+}
+impl YAxisTickLabels {
+    fn get_row_spacing(&self) -> u32 {
+        match self {
+            YAxisTickLabels::None => u32::MAX,
+            YAxisTickLabels::Sparse => 4,
+            YAxisTickLabels::Dense => 2,
+        }
+    }
+}
+
 impl<'a> Display for Chart<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         // get frame and replace space with U+2800 (BRAILLE PATTERN BLANK)
@@ -184,6 +215,27 @@ impl<'a> Display for Chart<'a> {
             let xmax = self.format_x_axis_tick(self.xmax);
 
             frame.insert_str(idx, &format!(" {0}", self.format_y_axis_tick(self.ymax)));
+
+            // Insert y-axis tick labels if requested
+            match self.y_axis_tick_labels {
+                YAxisTickLabels::None => {}
+                YAxisTickLabels::Sparse | YAxisTickLabels::Dense => {
+                    let row_spacing: u32 = self.y_axis_tick_labels.get_row_spacing();
+                    let num_steps: u32 = (self.height / 4) / row_spacing; // 4 pixels per row of text
+                    let step_size = (self.ymax - self.ymin) / (num_steps) as f32;
+                    for i in 1..(num_steps) {
+                        let matched_tuples: Vec<(usize, &str)> =
+                            frame.match_indices('\n').collect();
+                        frame.insert_str(
+                            matched_tuples[(i * row_spacing) as usize].0,
+                            &format!(
+                                " {0}",
+                                self.format_y_axis_tick(self.ymax - (step_size * i as f32))
+                            ),
+                        );
+                    }
+                }
+            }
 
             frame.push_str(&format!(
                 " {0}\n{1: <width$}{2}\n",
@@ -226,6 +278,7 @@ impl<'a> Chart<'a> {
             y_style: LineStyle::Dotted,
             x_label_format: LabelFormat::Value,
             y_label_format: LabelFormat::Value,
+            y_axis_tick_labels: YAxisTickLabels::None,
         }
     }
 
@@ -264,6 +317,7 @@ impl<'a> Chart<'a> {
             y_style: LineStyle::Dotted,
             x_label_format: LabelFormat::Value,
             y_label_format: LabelFormat::Value,
+            y_axis_tick_labels: YAxisTickLabels::None,
         }
     }
 
@@ -593,6 +647,31 @@ impl<'a> LabelBuilder<'a> for Chart<'a> {
     /// Specifies a formater for the y-axis label.
     fn y_label_format(&mut self, format: LabelFormat) -> &mut Self {
         self.y_label_format = format;
+        self
+    }
+}
+
+impl<'a> TickLabelBuilder<'a> for Chart<'a> {
+    /// Specifies the density of y-axis tick labels
+    fn y_tick_labels(&mut self, format: YAxisTickLabels) -> &mut Self {
+        match format {
+            YAxisTickLabels::None => {}
+            YAxisTickLabels::Sparse => {
+                self.height = if self.height < 16 {
+                    16
+                } else {
+                    self.height + 15 & !15
+                }
+            }
+            YAxisTickLabels::Dense => {
+                self.height = if self.height < 8 {
+                    8
+                } else {
+                    self.height + 7 & !7
+                }
+            }
+        }
+        self.y_axis_tick_labels = format;
         self
     }
 }
