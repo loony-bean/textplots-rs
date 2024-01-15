@@ -654,20 +654,21 @@ impl<'a> LabelBuilder<'a> for Chart<'a> {
 impl<'a> TickLabelBuilder<'a> for Chart<'a> {
     /// Specifies the density of y-axis tick labels
     fn y_tick_labels(&mut self, format: YAxisTickLabels) -> &mut Self {
+        // Round the height to the nearest multiple
         match format {
             YAxisTickLabels::None => {}
             YAxisTickLabels::Sparse => {
                 self.height = if self.height < 16 {
                     16
                 } else {
-                    self.height + 15 & !15
+                    ((self.height + 8) / 16) * 16
                 }
             }
             YAxisTickLabels::Dense => {
                 self.height = if self.height < 8 {
                     8
                 } else {
-                    self.height + 7 & !7
+                    ((self.height + 4) / 8) * 8
                 }
             }
         }
