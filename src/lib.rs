@@ -99,7 +99,7 @@ pub struct Chart<'a> {
     /// Y-axis label format.
     y_label_format: LabelFormat,
     /// Y-axis tick label density
-    y_tick_labels: YAxisTickLabels,
+    y_tick_labels: TickDisplay,
 }
 
 /// Specifies different kinds of plotted data.
@@ -146,12 +146,12 @@ pub trait LabelBuilder<'a> {
 }
 
 /// Provides an interface for adding tick labels to the y-axis
-pub trait TickLabelBuilder<'a> {
+pub trait TickDisplayBuilder<'a> {
     // Horizontal labels don't allow for support of x-axis tick labels
     /// Specifies the tick label density of y-axis.
     /// YAxisTickLabels::Sparse will change the canvas height to the nearest multiple of 16
     /// YAxisTickLabels::Dense will change the canvas height to the nearest multiple of 8
-    fn y_tick_display(&'a mut self, density: YAxisTickLabels) -> &'a mut Chart<'a>;
+    fn y_tick_display(&'a mut self, density: TickDisplay) -> &'a mut Chart<'a>;
 }
 
 impl<'a> Default for Chart<'a> {
@@ -187,7 +187,7 @@ pub enum LabelFormat {
 
 /// Specifies density of labels on the Y axis between ymin and ymax.
 /// Default value is `YAxisTickFormat::None`.
-pub enum YAxisTickLabels {
+pub enum TickDisplay {
     /// Tick labels are not displayed.
     None,
     /// Tick labels are sparsely shown (every 4th row)
@@ -195,12 +195,12 @@ pub enum YAxisTickLabels {
     /// Tick labels are densely shown (every 2nd row)
     Dense,
 }
-impl YAxisTickLabels {
+impl TickDisplay {
     fn get_row_spacing(&self) -> u32 {
         match self {
-            YAxisTickLabels::None => u32::MAX,
-            YAxisTickLabels::Sparse => 4,
-            YAxisTickLabels::Dense => 2,
+            TickDisplay::None => u32::MAX,
+            TickDisplay::Sparse => 4,
+            TickDisplay::Dense => 2,
         }
     }
 }
@@ -216,23 +216,27 @@ impl<'a> Display for Chart<'a> {
 
             frame.insert_str(idx, &format!(" {0}", self.format_y_axis_tick(self.ymax)));
 
-            // Insert y-axis tick labels if requested
+            // Display y-axis ticks if requested
             match self.y_tick_labels {
-                YAxisTickLabels::None => {}
-                YAxisTickLabels::Sparse | YAxisTickLabels::Dense => {
-                    let row_spacing: u32 = self.y_tick_labels.get_row_spacing();
-                    let num_steps: u32 = (self.height / 4) / row_spacing; // 4 pixels per row of text
+                TickDisplay::None => {}
+                TickDisplay::Sparse | TickDisplay::Dense => {
+                    let row_spacing: u32 = self.y_tick_labels.get_row_spacing(); // Rows between ticks
+                    let num_steps: u32 = (self.height / 4) / row_spacing; // 4 dots per row of text
                     let step_size = (self.ymax - self.ymin) / (num_steps) as f32;
                     for i in 1..(num_steps) {
-                        let matched_tuples: Vec<(usize, &str)> =
-                            frame.match_indices('\n').collect();
-                        frame.insert_str(
-                            matched_tuples[(i * row_spacing) as usize].0,
-                            &format!(
-                                " {0}",
-                                self.format_y_axis_tick(self.ymax - (step_size * i as f32))
-                            ),
-                        );
+                        if let Some(index) = frame
+                            .match_indices('\n')
+                            .collect::<Vec<(usize, &str)>>()
+                            .get((i * row_spacing) as usize)
+                        {
+                            frame.insert_str(
+                                index.0,
+                                &format!(
+                                    " {0}",
+                                    self.format_y_axis_tick(self.ymax - (step_size * i as f32))
+                                ),
+                            );
+                        }
                     }
                 }
             }
@@ -278,7 +282,7 @@ impl<'a> Chart<'a> {
             y_style: LineStyle::Dotted,
             x_label_format: LabelFormat::Value,
             y_label_format: LabelFormat::Value,
-            y_tick_labels: YAxisTickLabels::None,
+            y_tick_labels: TickDisplay::None,
         }
     }
 
@@ -317,7 +321,7 @@ impl<'a> Chart<'a> {
             y_style: LineStyle::Dotted,
             x_label_format: LabelFormat::Value,
             y_label_format: LabelFormat::Value,
-            y_tick_labels: YAxisTickLabels::None,
+            y_tick_labels: TickDisplay::None,
         }
     }
 
@@ -651,13 +655,13 @@ impl<'a> LabelBuilder<'a> for Chart<'a> {
     }
 }
 
-impl<'a> TickLabelBuilder<'a> for Chart<'a> {
+impl<'a> TickDisplayBuilder<'a> for Chart<'a> {
     /// Specifies the density of y-axis tick labels
-    fn y_tick_display(&mut self, format: YAxisTickLabels) -> &mut Self {
+    fn y_tick_display(&mut self, format: TickDisplay) -> &mut Self {
         // Round the height to the nearest multiple using integer division
         match format {
-            YAxisTickLabels::None => {}
-            YAxisTickLabels::Sparse => {
+            TickDisplay::None => {}
+            TickDisplay::Sparse => {
                 // Round to the nearest 16
                 self.height = if self.height < 16 {
                     16
@@ -665,7 +669,7 @@ impl<'a> TickLabelBuilder<'a> for Chart<'a> {
                     ((self.height + 8) / 16) * 16
                 }
             }
-            YAxisTickLabels::Dense => {
+            TickDisplay::Dense => {
                 // Round to the nearest 8
                 self.height = if self.height < 8 {
                     8
