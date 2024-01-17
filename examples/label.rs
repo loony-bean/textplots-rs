@@ -1,5 +1,7 @@
 use chrono::{Duration, NaiveDate};
-use textplots::{Chart, ColorPlot, LabelBuilder, LabelFormat, Shape};
+use textplots::{
+    Chart, ColorPlot, LabelBuilder, LabelFormat, Shape, TickDisplay, TickDisplayBuilder,
+};
 
 fn main() {
     // Specify how labels are displayed.
@@ -23,5 +25,6 @@ fn main() {
             format!("{}", start + Duration::days(val as i64))
         })))
         .y_label_format(LabelFormat::Value)
-        .display();
+        .y_tick_display(TickDisplay::Sparse)
+        .nice();
 }
