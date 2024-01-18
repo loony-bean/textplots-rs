@@ -98,6 +98,8 @@ pub struct Chart<'a> {
     x_label_format: LabelFormat,
     /// Y-axis label format.
     y_label_format: LabelFormat,
+    /// Y-axis tick label density
+    y_tick_display: TickDisplay,
 }
 
 /// Specifies different kinds of plotted data.
@@ -143,6 +145,15 @@ pub trait LabelBuilder<'a> {
     fn y_label_format(&'a mut self, format: LabelFormat) -> &'a mut Chart<'a>;
 }
 
+/// Provides an interface for adding tick labels to the y-axis
+pub trait TickDisplayBuilder<'a> {
+    // Horizontal labels don't allow for support of x-axis tick labels
+    /// Specifies the tick label density of y-axis.
+    /// TickDisplay::Sparse will change the canvas height to the nearest multiple of 16
+    /// TickDisplay::Dense will change the canvas height to the nearest multiple of 8
+    fn y_tick_display(&'a mut self, density: TickDisplay) -> &'a mut Chart<'a>;
+}
+
 impl<'a> Default for Chart<'a> {
     fn default() -> Self {
         Self::new(120, 60, -10.0, 10.0)
@@ -174,6 +185,26 @@ pub enum LabelFormat {
     Custom(Box<dyn Fn(f32) -> String>),
 }
 
+/// Specifies density of labels on the Y axis between ymin and ymax.
+/// Default value is `YAxisTickFormat::None`.
+pub enum TickDisplay {
+    /// Tick labels are not displayed.
+    None,
+    /// Tick labels are sparsely shown (every 4th row)
+    Sparse,
+    /// Tick labels are densely shown (every 2nd row)
+    Dense,
+}
+impl TickDisplay {
+    fn get_row_spacing(&self) -> u32 {
+        match self {
+            TickDisplay::None => u32::MAX, // Unused
+            TickDisplay::Sparse => 4,
+            TickDisplay::Dense => 2,
+        }
+    }
+}
+
 impl<'a> Display for Chart<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         // get frame and replace space with U+2800 (BRAILLE PATTERN BLANK)
@@ -184,6 +215,31 @@ impl<'a> Display for Chart<'a> {
             let xmax = self.format_x_axis_tick(self.xmax);
 
             frame.insert_str(idx, &format!(" {0}", self.format_y_axis_tick(self.ymax)));
+
+            // Display y-axis ticks if requested
+            match self.y_tick_display {
+                TickDisplay::None => {}
+                TickDisplay::Sparse | TickDisplay::Dense => {
+                    let row_spacing: u32 = self.y_tick_display.get_row_spacing(); // Rows between ticks
+                    let num_steps: u32 = (self.height / 4) / row_spacing; // 4 dots per row of text
+                    let step_size = (self.ymax - self.ymin) / (num_steps) as f32;
+                    for i in 1..(num_steps) {
+                        if let Some(index) = frame
+                            .match_indices('\n')
+                            .collect::<Vec<(usize, &str)>>()
+                            .get((i * row_spacing) as usize)
+                        {
+                            frame.insert_str(
+                                index.0,
+                                &format!(
+                                    " {0}",
+                                    self.format_y_axis_tick(self.ymax - (step_size * i as f32))
+                                ),
+                            );
+                        }
+                    }
+                }
+            }
 
             frame.push_str(&format!(
                 " {0}\n{1: <width$}{2}\n",
@@ -226,6 +282,7 @@ impl<'a> Chart<'a> {
             y_style: LineStyle::Dotted,
             x_label_format: LabelFormat::Value,
             y_label_format: LabelFormat::Value,
+            y_tick_display: TickDisplay::None,
         }
     }
 
@@ -264,6 +321,7 @@ impl<'a> Chart<'a> {
             y_style: LineStyle::Dotted,
             x_label_format: LabelFormat::Value,
             y_label_format: LabelFormat::Value,
+            y_tick_display: TickDisplay::None,
         }
     }
 
@@ -593,6 +651,34 @@ impl<'a> LabelBuilder<'a> for Chart<'a> {
     /// Specifies a formater for the y-axis label.
     fn y_label_format(&mut self, format: LabelFormat) -> &mut Self {
         self.y_label_format = format;
+        self
+    }
+}
+
+impl<'a> TickDisplayBuilder<'a> for Chart<'a> {
+    /// Specifies the density of y-axis tick labels
+    fn y_tick_display(&mut self, density: TickDisplay) -> &mut Self {
+        // Round the canvas height to the nearest multiple using integer division
+        match density {
+            TickDisplay::None => {}
+            TickDisplay::Sparse => {
+                // Round to the nearest 16
+                self.height = if self.height < 16 {
+                    16
+                } else {
+                    ((self.height + 8) / 16) * 16
+                }
+            }
+            TickDisplay::Dense => {
+                // Round to the nearest 8
+                self.height = if self.height < 8 {
+                    8
+                } else {
+                    ((self.height + 4) / 8) * 8
+                }
+            }
+        }
+        self.y_tick_display = density;
         self
     }
 }
