@@ -2,6 +2,9 @@
 //!
 //! Merely a bunch of functions hanging around while the library API is taking shape.
 
+use alloc::vec;
+use alloc::vec::Vec;
+
 /// Transforms points into frequency distribution (for using in histograms).
 /// Values outside of [`min`, `max`] interval are ignored, and everything that
 /// falls into the specified interval is grouped into `bins` number of buckets of equal width.
