@@ -33,9 +33,9 @@ drawille = "0.3.0"
 structopt = { version = "0.3", optional = true }
 meval = { version = "0.2", optional = true }
 rgb = "0.8.27"
+axis_labels_rs = "0.4.0"
 
 [dev-dependencies]
 ctrlc = "3"
 console = "0.15.7"
 chrono = "0.4.30"
-

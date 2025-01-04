@@ -52,6 +52,7 @@
 pub mod scale;
 pub mod utils;
 
+use axis_labels_rs::AxisLabels;
 use drawille::Canvas as BrailleCanvas;
 use drawille::PixelColor;
 use rgb::RGB8;
@@ -194,14 +195,16 @@ pub enum TickDisplay {
     Sparse,
     /// Tick labels are densely shown (every 2nd row)
     Dense,
+    /// Optimally readable labels
+    Auto,
 }
 
 impl TickDisplay {
     fn get_row_spacing(&self) -> u32 {
         match self {
-            TickDisplay::None => u32::MAX, // Unused
             TickDisplay::Sparse => 4,
             TickDisplay::Dense => 2,
+            _ => u32::MAX, // Unused
         }
     }
 }
@@ -212,12 +215,12 @@ impl<'a> Display for Chart<'a> {
         let mut frame = self.canvas.frame().replace(' ', "\u{2800}");
 
         if let Some(idx) = frame.find('\n') {
-            let xmin = self.format_x_axis_tick(self.xmin);
-            let xmax = self.format_x_axis_tick(self.xmax);
+            // Write y_max
+            if !matches!(self.y_tick_display, TickDisplay::Auto) {
+                frame.insert_str(idx, &format!(" {0}", self.format_y_axis_tick(self.ymax)));
+            }
 
-            frame.insert_str(idx, &format!(" {0}", self.format_y_axis_tick(self.ymax)));
-
-            // Display y-axis ticks if requested
+            // Add y axis labels
             match self.y_tick_display {
                 TickDisplay::None => {}
                 TickDisplay::Sparse | TickDisplay::Dense => {
@@ -240,11 +243,42 @@ impl<'a> Display for Chart<'a> {
                         }
                     }
                 }
+                TickDisplay::Auto => {
+                    let height = (self.height / 4) as u32 + 1;
+                    let labels = AxisLabels::new(
+                        self.ymin as f64,
+                        self.ymax as f64,
+                        height,
+                        true,
+                    ).render().unwrap();
+
+                    let labels_vec = labels.split("\n").collect::<Vec<&str>>();
+                    for i in 0..height {
+                        if let Some(index) = frame
+                            .match_indices('\n')
+                            .collect::<Vec<(usize, &str)>>()
+                            .get(i as usize)
+                        {
+                            frame.insert_str(
+                                index.0,
+                                &format!(" {0}", labels_vec[i as usize]),
+                            );
+                        }
+                    }
+                    frame.push_str(&format!(" {0}", labels_vec[(height as usize) - 1]));
+                }
             }
 
+            // Write y_min
+            if !matches!(self.y_tick_display, TickDisplay::Auto) {
+                frame.push_str(&format!(" {0}", self.format_y_axis_tick(self.ymin)));
+            }
+
+            // Write x axis labels
+            let xmin = self.format_x_axis_tick(self.xmin);
+            let xmax = self.format_x_axis_tick(self.xmax);
             frame.push_str(&format!(
-                " {0}\n{1: <width$}{2}\n",
-                self.format_y_axis_tick(self.ymin),
+                "\n{0: <width$}{1}\n",
                 xmin,
                 xmax,
                 width = (self.width as usize) / 2 - xmax.len()
@@ -661,7 +695,6 @@ impl<'a> TickDisplayBuilder<'a> for Chart<'a> {
     fn y_tick_display(&mut self, density: TickDisplay) -> &mut Self {
         // Round the canvas height to the nearest multiple using integer division
         match density {
-            TickDisplay::None => {}
             TickDisplay::Sparse => {
                 // Round to the nearest 16
                 self.height = if self.height < 16 {
@@ -678,6 +711,7 @@ impl<'a> TickDisplayBuilder<'a> for Chart<'a> {
                     ((self.height + 4) / 8) * 8
                 }
             }
+            _ => {}
         }
         self.y_tick_display = density;
         self

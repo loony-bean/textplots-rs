@@ -25,6 +25,6 @@ fn main() {
             format!("{}", start + Duration::days(val as i64))
         })))
         .y_label_format(LabelFormat::Value)
-        .y_tick_display(TickDisplay::Sparse)
+        .y_tick_display(TickDisplay::Auto)
         .nice();
 }
