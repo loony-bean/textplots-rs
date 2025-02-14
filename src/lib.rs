@@ -119,30 +119,30 @@ pub enum Shape<'a> {
 /// Provides an interface for drawing plots.
 pub trait Plot<'a> {
     /// Draws a [line chart](https://en.wikipedia.org/wiki/Line_chart) of points connected by straight line segments.
-    fn lineplot(&'a mut self, shape: &'a Shape) -> &'a mut Chart;
+    fn lineplot(&mut self, shape: &'a Shape) -> &mut Chart<'a>;
 }
 
 /// Provides an interface for drawing colored plots.
 pub trait ColorPlot<'a> {
     /// Draws a [line chart](https://en.wikipedia.org/wiki/Line_chart) of points connected by straight line segments using the specified color
-    fn linecolorplot(&'a mut self, shape: &'a Shape, color: RGB8) -> &'a mut Chart;
+    fn linecolorplot(&mut self, shape: &'a Shape, color: RGB8) -> &mut Chart<'a>;
 }
 
 /// Provides a builder interface for styling axis.
 pub trait AxisBuilder<'a> {
     /// Specifies the style of x-axis.
-    fn x_axis_style(&'a mut self, style: LineStyle) -> &'a mut Chart<'a>;
+    fn x_axis_style(&mut self, style: LineStyle) -> &mut Chart<'a>;
 
     /// Specifies the style of y-axis.
-    fn y_axis_style(&'a mut self, style: LineStyle) -> &'a mut Chart<'a>;
+    fn y_axis_style(&mut self, style: LineStyle) -> &mut Chart<'a>;
 }
 
 pub trait LabelBuilder<'a> {
     /// Specifies the label format of x-axis.
-    fn x_label_format(&'a mut self, format: LabelFormat) -> &'a mut Chart<'a>;
+    fn x_label_format(&mut self, format: LabelFormat) -> &mut Chart<'a>;
 
     /// Specifies the label format of y-axis.
-    fn y_label_format(&'a mut self, format: LabelFormat) -> &'a mut Chart<'a>;
+    fn y_label_format(&mut self, format: LabelFormat) -> &mut Chart<'a>;
 }
 
 /// Provides an interface for adding tick labels to the y-axis
@@ -151,7 +151,7 @@ pub trait TickDisplayBuilder<'a> {
     /// Specifies the tick label density of y-axis.
     /// TickDisplay::Sparse will change the canvas height to the nearest multiple of 16
     /// TickDisplay::Dense will change the canvas height to the nearest multiple of 8
-    fn y_tick_display(&'a mut self, density: TickDisplay) -> &'a mut Chart<'a>;
+    fn y_tick_display(&mut self, density: TickDisplay) -> &mut Chart<'a>;
 }
 
 impl<'a> Default for Chart<'a> {
@@ -524,11 +524,11 @@ impl<'a> Chart<'a> {
 
                         if let Some(color) = color {
                             let color = rgb_to_pixelcolor(color);
-                            self.canvas.line_colored(x1, y2, x2, y2, color);
-                            self.canvas.line_colored(x1, y1, x1, y2, color);
+                            self.canvas.line_colored(x2, y1, x2, y2, color);
+                            self.canvas.line_colored(x1, y1, x2, y1, color);
                         } else {
-                            self.canvas.line(x1, y2, x2, y2);
-                            self.canvas.line(x1, y1, x1, y2);
+                            self.canvas.line(x2, y1, x2, y2);
+                            self.canvas.line(x1, y1, x2, y1);
                         }
                     }
                 }
@@ -603,7 +603,7 @@ impl<'a> Chart<'a> {
 }
 
 impl<'a> ColorPlot<'a> for Chart<'a> {
-    fn linecolorplot(&'a mut self, shape: &'a Shape, color: RGB8) -> &'a mut Chart {
+    fn linecolorplot(&mut self, shape: &'a Shape, color: RGB8) -> &mut Chart<'a> {
         self.shapes.push((shape, Some(color)));
         if self.y_ranging == ChartRangeMethod::AutoRange {
             self.rescale(shape);
@@ -613,7 +613,7 @@ impl<'a> ColorPlot<'a> for Chart<'a> {
 }
 
 impl<'a> Plot<'a> for Chart<'a> {
-    fn lineplot(&'a mut self, shape: &'a Shape) -> &'a mut Chart {
+    fn lineplot(&mut self, shape: &'a Shape) -> &mut Chart<'a> {
         self.shapes.push((shape, None));
         if self.y_ranging == ChartRangeMethod::AutoRange {
             self.rescale(shape);
@@ -631,12 +631,12 @@ fn rgb_to_pixelcolor(rgb: &RGB8) -> PixelColor {
 }
 
 impl<'a> AxisBuilder<'a> for Chart<'a> {
-    fn x_axis_style(&'a mut self, style: LineStyle) -> &'a mut Chart {
+    fn x_axis_style(&mut self, style: LineStyle) -> &mut Chart<'a> {
         self.x_style = style;
         self
     }
 
-    fn y_axis_style(&'a mut self, style: LineStyle) -> &'a mut Chart {
+    fn y_axis_style(&mut self, style: LineStyle) -> &mut Chart<'a> {
         self.y_style = style;
         self
     }
