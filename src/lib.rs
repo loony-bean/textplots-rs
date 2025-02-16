@@ -111,8 +111,12 @@ pub enum Shape<'a> {
     /// Points connected with lines.
     Lines(&'a [(f32, f32)]),
     /// Points connected in step fashion.
+    ///
+    /// Note: the final point will not be drawn, only its x-coordinate determines how far the last bar extends.
     Steps(&'a [(f32, f32)]),
     /// Points represented with bars.
+    ///
+    /// Note: the final point will not be drawn, only its x-coordinate determines how far the last bar extends.
     Bars(&'a [(f32, f32)]),
 }
 
@@ -471,7 +475,7 @@ impl<'a> Chart<'a> {
                     .filter_map(|i| {
                         let x = x_scale.inv_linear(i as f32);
                         let y = f(x);
-                        if y.is_normal() {
+                        if y.is_normal() || y == 0.0 {
                             let j = y_scale.linear(y).round();
                             Some((i, self.height - j as u32))
                         } else {
@@ -539,13 +543,13 @@ impl<'a> Chart<'a> {
 
                         if let Some(color) = color {
                             let color = rgb_to_pixelcolor(color);
-                            self.canvas.line_colored(x1, y2, x2, y2, color);
-                            self.canvas.line_colored(x1, y1, x1, y2, color);
+                            self.canvas.line_colored(x1, y1, x2, y1, color);
+                            self.canvas.line_colored(x2, y1, x2, y2, color);
                             self.canvas.line_colored(x1, self.height, x1, y1, color);
                             self.canvas.line_colored(x2, self.height, x2, y2, color);
                         } else {
-                            self.canvas.line(x1, y2, x2, y2);
-                            self.canvas.line(x1, y1, x1, y2);
+                            self.canvas.line(x1, y1, x2, y1);
+                            self.canvas.line(x2, y1, x2, y2);
                             self.canvas.line(x1, self.height, x1, y1);
                             self.canvas.line(x2, self.height, x2, y2);
                         }
