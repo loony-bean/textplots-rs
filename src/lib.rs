@@ -327,7 +327,7 @@ impl<'a> Chart<'a> {
     }
 
     /// Displays bounding rect.
-    fn borders(&mut self) {
+    pub fn borders(&mut self) {
         let w = self.width;
         let h = self.height;
 
